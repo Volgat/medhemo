@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Send, Mic, RotateCcw } from "lucide-react";

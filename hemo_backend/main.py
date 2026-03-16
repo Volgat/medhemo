@@ -7,16 +7,14 @@ import logging
 
 from dotenv import load_dotenv  # type: ignore
 import httpx  # type: ignore
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException  # type: ignore
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Depends  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore
 from fastapi.responses import StreamingResponse  # type: ignore
-from pydantic import BaseModel  # type: ignore
+from pydantic import BaseModel, EmailStr  # type: ignore
 from PIL import Image  # type: ignore
-from transformers import AutoModel, logging as tf_logging  # type: ignore
-
+from sqlalchemy.orm import Session
+from database import init_db, get_db, User, hash_password, verify_password
 from earcp_orchestrator import get_ensemble
-
-tf_logging.set_verbosity_error()
 
 
 load_dotenv()
@@ -51,20 +49,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load the unified model from the local directory to ensure our latest changes are used
-logger.info("Loading unified model from ./medhemo-earcp ...")
-try:
-    medhemo_model = AutoModel.from_pretrained("./medhemo-earcp", trust_remote_code=True)
-    logger.info("Unified model loaded locally successfully.")
-except Exception as e:
-    logger.error(f"Failed to load local model: {e}")
-    medhemo_model = None
+# Init DB
+init_db()
+
+# Lightweight Ensemble Orchestrator
+ensemble = get_ensemble()
+logger.info("Ensemble orchestrator initialized.")
 
 
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     message: str
     history: list[dict] = []
+
+class UserSignup(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+class AuthResponse(BaseModel):
+    message: str
+    username: str
+    token: str = "demo-token" # Placeholder until JWT is fully setup
 
 class ChatResponse(BaseModel):
     response: str
@@ -302,6 +312,29 @@ async def synthesize_tts(text: str, lang: str = "fr") -> bytes:
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
+@app.post("/api/auth/signup", response_model=AuthResponse)
+async def signup(user_data: UserSignup, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.username == user_data.username).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    new_user = User(
+        username=user_data.username,
+        email=user_data.email,
+        hashed_password=hash_password(user_data.password)
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {"message": "Success", "username": new_user.username, "token": "signup-token"}
+
+@app.post("/api/auth/login", response_model=AuthResponse)
+async def login(user_data: UserLogin, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == user_data.username).first()
+    if not user or not verify_password(user_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"message": "Logged in", "username": user.username, "token": "login-token"}
+
 @app.get("/api/health")
 async def health():
     ensemble = get_ensemble()
@@ -470,12 +503,10 @@ async def multimodal_unified(
 
     transcription: str | None = None
     visual_description: str | None = None
-    audio_b64: str | None = None
 
     if audio is not None:
         logger.info("Multimodal: Audio input detected")
         audio_bytes = await audio.read()
-        audio_b64 = base64.b64encode(audio_bytes).decode()
 
     image_b64: str | None = None
     if image is not None:
@@ -483,26 +514,36 @@ async def multimodal_unified(
         image_bytes = await image.read()
         image_b64 = base64.b64encode(image_bytes).decode()
 
-    # ── Execute the Unified MedHemo Model ────────────────────────────────────
-    if medhemo_model is None:
-        raise HTTPException(status_code=500, detail="Unified model not loaded.")
-
-    logger.info("Executing MedHemo unified model forward pass...")
-    def run_inference():
-        return medhemo_model.forward(
-            text=text.strip(),
-            image_b64=image_b64,
-            audio_b64=audio_b64,
-            history=history
-        )
+    # ── Execute the Unified Hemo Orchestration ──────────────────────────────
+    logger.info("Executing Hemo multimodal orchestration...")
     
-    # Run in threadpool since inference is synchronous wrapping httpx calls
-    out = await asyncio.to_thread(run_inference)
+    transcription = None
+    if audio is not None:
+        audio_bytes = await audio.read()
+        # In a real scenario, we save to temp or pass bytes. 
+        # For simplicity, we use the ensemble's router logic.
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".webm", delete=False, mode='wb') as f:
+            f.write(audio_bytes)
+            f.flush()
+            audio_out = ensemble.process_audio(f.name)
+            transcription = audio_out.get("transcription")
+        os.unlink(f.name)
 
-    ai_response = out.get("response", "Erreur.")
-    transcription = out.get("transcription")
-    visual_description = out.get("visual_description")
-    earcp_weights = out.get("earcp_weights", {})
+    visual_description = None
+    if image is not None:
+        image_bytes = await image.read()
+        image_b64 = base64.b64encode(image_bytes).decode()
+        vision_out = ensemble.process_vision(image_b64, text)
+        visual_description = vision_out.get("visual_description")
+
+    # Generate final response
+    prompt = text or (transcription if transcription else "Analyse cette image.")
+    if visual_description:
+        prompt = f"Description visuelle: {visual_description}\nUtilisateur: {prompt}"
+
+    ai_response = await call_medgemma(prompt, history)
+    earcp_weights = ensemble.get_weights()
     
     logger.info(f"Unified model responded. EARCP weights: {earcp_weights}")
 

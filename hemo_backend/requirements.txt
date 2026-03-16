@@ -1,11 +1,12 @@
-fastapi>=0.127.0
+fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
 python-multipart>=0.0.9
 httpx>=0.27.0
 python-dotenv>=1.0.0
-huggingface-hub>=0.36.0
+huggingface-hub>=0.25.0
 Pillow>=10.0.0
 requests>=2.31.0
-aiofiles>=23.0.0
 earcp>=1.0.0
 gtts>=2.5.0
+sqlalchemy>=2.0.0
+Email-validator>=2.2.0

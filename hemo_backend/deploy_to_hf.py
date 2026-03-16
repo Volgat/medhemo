@@ -53,15 +53,7 @@ def deploy():
             )
             print(f"   - {file} uploaded.")
 
-    # Upload the module directory
-    if os.path.isdir("medhemo-earcp"):
-        api.upload_folder(
-            folder_path="medhemo-earcp",
-            path_in_repo="medhemo-earcp",
-            repo_id=repo_id,
-            repo_type="space"
-        )
-        print(f"   - medhemo-earcp/ directory uploaded.")
+    # Deployment complete for core files
 
     # Set Secrets
     print("Setting Space Secrets...")

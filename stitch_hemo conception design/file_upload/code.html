@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hemo - File Upload</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4bbe4f",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#141e15",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<!-- Top Navigation Bar -->
+<nav class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-4 border-b border-primary/10">
+<div class="max-w-xl mx-auto flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">Hemo Analysis</h1>
+</div>
+<div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/10 text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</div>
+</div>
+</nav>
+<main class="max-w-xl mx-auto p-4 pb-32 space-y-6">
+<!-- Header Section -->
+<section class="pt-2">
+<h2 class="text-3xl font-bold">Upload Lab Results</h2>
+<p class="text-slate-500 dark:text-slate-400 mt-2">Get an instant AI-powered explanation of your blood work or prescriptions.</p>
+</section>
+<!-- Upload Area -->
+<section>
+<div class="relative group cursor-pointer">
+<div class="flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors px-6 py-12">
+<div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-4xl">cloud_upload</span>
+</div>
+<div class="text-center">
+<p class="text-lg font-bold">Tap or drag to upload</p>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Supported formats: PDF, JPG, PNG</p>
+</div>
+<div class="flex gap-4 mt-2">
+<div class="flex items-center gap-1 text-xs font-medium text-slate-400">
+<span class="material-symbols-outlined text-sm text-primary">description</span> PDF
+                        </div>
+<div class="flex items-center gap-1 text-xs font-medium text-slate-400">
+<span class="material-symbols-outlined text-sm text-primary">image</span> JPG
+                        </div>
+<div class="flex items-center gap-1 text-xs font-medium text-slate-400">
+<span class="material-symbols-outlined text-sm text-primary">image</span> PNG
+                        </div>
+</div>
+<button class="mt-4 px-8 py-2.5 bg-primary text-white font-bold rounded-full hover:shadow-lg transition-shadow">
+                        Select File
+                    </button>
+</div>
+</div>
+</section>
+<!-- Uploaded Files Section -->
+<section class="space-y-3">
+<h3 class="text-lg font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">folder_open</span>
+                Uploaded Files
+            </h3>
+<div class="space-y-3">
+<!-- File Item 1 -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-800/50 p-3 rounded-lg border border-primary/5 shadow-sm">
+<div class="w-14 h-14 rounded-lg bg-cover bg-center shrink-0 border border-slate-200 dark:border-slate-700" data-alt="A close up of a medical lab report paper" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBFC5C07wfzi0FruhADhjLaScXoABmuoO-_Nf2-93eER9nVp5yelF-w0Lt0m5vK7WWcXq569VVrSY1_IVDTY9RDMA8SwempyiUfVI69tFXUjkkgremdjG-nD8s3sBGNiw_sBXsQ1cvLVO2aMQPysg3nyqn3nmkJ_gXLIvoHeoIkVVVUaRQPR-DVkwCg9nd94c6HVTsRnO8HM_y2SBl5OMxfVl5UHkGWtHXO3sxT8vKgNjlkdNrdSZfePYqcFc1eFN4kYanBEO2r7Fc');"></div>
+<div class="flex-1 min-w-0">
+<p class="text-base font-medium truncate">blood_panel_sept.pdf</p>
+<p class="text-sm text-slate-400">2.4 MB • Uploaded today</p>
+</div>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+<!-- File Item 2 -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-800/50 p-3 rounded-lg border border-primary/5 shadow-sm">
+<div class="w-14 h-14 rounded-lg bg-cover bg-center shrink-0 border border-slate-200 dark:border-slate-700" data-alt="A blurry view of a medical prescription note" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDHtfix2PDIvDLzYWyCrWW0Bhwo8zdI4AGVXoc3Rk0rFIO00N3UfsDFw6OxQCSkAxpuPIZ2hijoDhwyX_mrsimSadXHZ4LZnXfLR_YOywoEwW0skDhK9Iwa5iI8F1HjljjYl6yqqZOYGZbulG2zqPsG5bHfS4r8gTex-4Frpe7F3qrqcFh-J-YcqaKgCBX6JZZjM4PUAKmz7uCTQiIAr7TFJVjEtP18XDTCty8uf60DwOf2nKaWtFI_nfYMca1LosSSbdDdYD1o9Lo');"></div>
+<div class="flex-1 min-w-0">
+<p class="text-base font-medium truncate">prescription_dr_smith.jpg</p>
+<p class="text-sm text-slate-400">850 KB • Uploaded today</p>
+</div>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+</section>
+<!-- AI Summary Section -->
+<section class="bg-primary/5 rounded-xl p-5 border border-primary/10">
+<div class="flex items-center gap-2 mb-3">
+<div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">auto_awesome</span>
+</div>
+<h3 class="text-lg font-bold">AI Summary Preview</h3>
+</div>
+<div class="space-y-3">
+<p class="text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+                    Your results indicate that your <span class="text-primary font-semibold">Iron levels</span> are within the normal range, but slightly on the lower end. This might explain why you've been feeling a bit tired lately.
+                </p>
+<div class="p-3 bg-white/50 dark:bg-slate-800/30 rounded-lg text-sm border border-primary/5">
+<span class="font-bold text-primary">Simple tip:</span> Try adding more leafy greens like spinach to your lunch this week to boost natural energy!
+                </div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button Area -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light/95 dark:via-background-dark/95 to-transparent">
+<div class="max-w-xl mx-auto">
+<button class="w-full bg-primary text-white py-4 rounded-full font-bold text-lg shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+<span class="material-symbols-outlined">query_stats</span>
+                Analyze Files
+            </button>
+</div>
+</div>
+</body></html>

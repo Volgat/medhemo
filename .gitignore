@@ -1,0 +1,35 @@
+# Hemo Project Gitignore
+
+# Node
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+ENV/
+.env
+.ruff_cache/
+.pytest_cache/
+
+# Data & Models
+medhemo-earcp/
+*.json
+!package.json
+!jsconfig.json
+*.log
+load_output.txt
+
+# Artifacts & Gemini
+.gemini/
+brain/
+.agents/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hemo App - AI Chat</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4bbe4f",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#141e15",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<div class="relative flex h-screen w-full flex-col overflow-hidden max-w-md mx-auto bg-white dark:bg-background-dark shadow-2xl">
+<!-- Header -->
+<header class="flex items-center bg-white dark:bg-background-dark p-4 border-b border-slate-100 dark:border-slate-800 justify-between shrink-0">
+<div class="text-slate-900 dark:text-slate-100 flex size-10 items-center justify-center cursor-pointer">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<div class="flex flex-col items-center">
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">Hemo AI</h2>
+<span class="text-[10px] text-primary font-bold uppercase tracking-widest">Online</span>
+</div>
+<div class="flex w-10 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-full size-10 bg-transparent text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Chat Area -->
+<main class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- User Message -->
+<div class="flex items-end gap-3 justify-end">
+<div class="flex flex-col gap-1 items-end">
+<p class="text-slate-500 dark:text-slate-400 text-[11px] font-medium px-1">You</p>
+<div class="text-sm md:text-base font-medium leading-relaxed max-w-[280px] rounded-2xl rounded-tr-none px-4 py-3 bg-blue-600 text-white shadow-sm">
+                        What are the common symptoms of anemia?
+                    </div>
+</div>
+<div class="bg-slate-200 dark:bg-slate-700 rounded-full w-8 h-8 shrink-0 flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Portrait of a smiling young man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtJIYKkWN7vJoMy8SOzloNGpmubyNZb8hRj-zsLQxAMJC-Wzb7Cbl3K_m13PMEXTznzXFSQlUnyZPYBv8yyVXQqiF9uRaUF0eY1o3hcs89aTHI5TcC5sn5bDGx1nLpKUEDGCu3Vk8QAvXhkZxnoUP4YKJMIif0ZkVcpeLP8cMTi3UVzx4ZFwL3mI6PnGjbD4FKG05UHOk6eq9m0aZSKrR5p_QfJMkY_zAKUIQ8K65WUX0xyllKvkUK40GAFZu2MJ1pgrS5TQ6e_sA"/>
+</div>
+</div>
+<!-- AI Response -->
+<div class="flex items-end gap-3">
+<div class="bg-primary/20 dark:bg-primary/10 rounded-full w-8 h-8 shrink-0 flex items-center justify-center border border-primary/30">
+<span class="material-symbols-outlined text-primary text-xl">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1 items-start">
+<p class="text-slate-500 dark:text-slate-400 text-[11px] font-medium px-1">Hemo AI</p>
+<div class="text-sm md:text-base font-normal leading-relaxed max-w-[280px] rounded-2xl rounded-tl-none px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200 dark:border-slate-700">
+                        Common symptoms include persistent fatigue, pale skin, shortness of breath, dizziness, and cold hands or feet. These occur because your body isn't getting enough oxygen-rich blood.
+                    </div>
+</div>
+</div>
+<!-- AI Response Card with Media Controls -->
+<div class="flex items-start gap-3">
+<div class="bg-primary/20 dark:bg-primary/10 rounded-full w-8 h-8 shrink-0 flex items-center justify-center border border-primary/30 mt-6">
+<span class="material-symbols-outlined text-primary text-xl">smart_toy</span>
+</div>
+<div class="flex-1 max-w-[300px] mt-1">
+<div class="flex flex-col items-stretch justify-start rounded-xl shadow-md bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 overflow-hidden">
+<div class="w-full h-32 bg-gradient-to-br from-primary/40 to-primary relative" data-alt="Abstract green flowing medical health pattern">
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-5xl">graphic_eq</span>
+</div>
+</div>
+<div class="flex flex-col gap-3 p-4">
+<div>
+<h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold">Detailed Explanation</h3>
+<p class="text-slate-600 dark:text-slate-400 text-xs mt-1">Listen to a detailed breakdown of how iron deficiency affects your hemoglobin levels.</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<button class="flex-1 flex items-center justify-center gap-2 rounded-full h-9 bg-primary text-white text-xs font-bold hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-sm">play_arrow</span>
+<span>Play Audio</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 rounded-full h-9 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-600 transition-all">
+<span class="material-symbols-outlined text-sm">translate</span>
+<span>Translate</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Translation Options (Subtle) -->
+<div class="mt-3 flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+<span class="text-[10px] text-slate-400 uppercase font-bold shrink-0">To:</span>
+<button class="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-[11px] font-medium whitespace-nowrap hover:border-primary">English</button>
+<button class="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-[11px] font-medium whitespace-nowrap hover:border-primary">Français</button>
+<button class="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-[11px] font-medium whitespace-nowrap hover:border-primary">Ewe</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Input Bar -->
+<footer class="p-4 bg-white dark:bg-background-dark border-t border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-2">
+<button class="flex size-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<div class="relative flex-1">
+<input class="w-full h-11 bg-slate-100 dark:bg-slate-800 border-none rounded-full px-5 pr-12 text-sm focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-100 placeholder-slate-400" placeholder="Ask follow-up..." type="text"/>
+<button class="absolute right-1 top-1 size-9 flex items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-lg">mic</span>
+</button>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="flex justify-around pt-4 mt-2">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined font-variation-fill-1">chat_bubble</span>
+<span class="text-[10px] font-bold">Chat</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-600" href="#">
+<span class="material-symbols-outlined">favorite</span>
+<span class="text-[10px] font-medium">Health</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-600" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="text-[10px] font-medium">Reports</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-600" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</nav>
+</footer>
+</div>
+</body></html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hemo - Your Health Assistant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4bbe4f",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#141e15",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<header class="flex items-center justify-between px-6 pt-6 pb-2">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/30">
+<img class="w-8 h-8 object-contain" data-alt="Friendly green cell-shaped mascot icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCUUXqrjnDEeMS2RGK7dsa797k0AWxW-cS26g8G2slXafhsvwPhcrVrWTHrZhEzThoAfPTUHbEUhfxm80jTiE2MeEIGgOskTU8KskBxKE2HKimuC1ajij1ALAuz7AUJA4XiMyxH1cRPb3Ka-I0GLk_pYYHlvqixCd9Qwu6ECv-KDTB7GqEAH79c7rKRSEvDwi9F-31EHuPDn-5GpR5e_9y9_5Cv6oCuGuopWrPhJrQcWG8MkbrlIdL7he01jQpBbUtTpDX2oD3z-4"/>
+</div>
+<h1 class="text-xl font-bold tracking-tight">Hemo</h1>
+</div>
+<button class="size-10 rounded-full bg-slate-200/50 dark:bg-slate-800/50 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-300">account_circle</span>
+</button>
+</header>
+<main class="flex-1 overflow-y-auto px-6 pb-32">
+<div class="py-10 text-center">
+<h2 class="text-3xl font-bold leading-tight mb-8">How can I help you today?</h2>
+<div class="flex justify-center mb-4">
+<button class="relative group">
+<div class="absolute inset-0 bg-primary/20 rounded-full animate-pulse scale-110"></div>
+<div class="relative size-32 rounded-full bg-primary shadow-lg shadow-primary/40 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-5xl">mic</span>
+</div>
+</button>
+</div>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">Tap to speak with Hemo</p>
+</div>
+<div class="mb-8">
+<h3 class="text-lg font-bold mb-4">Quick Actions</h3>
+<div class="grid grid-cols-1 gap-3">
+<button class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm transition-active active:scale-[0.98]">
+<div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">chat_bubble</span>
+</div>
+<div class="text-left">
+<p class="font-semibold">Ask a health question</p>
+<p class="text-xs text-slate-500">Get instant AI-backed answers</p>
+</div>
+</button>
+<button class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm transition-active active:scale-[0.98]">
+<div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">photo_camera</span>
+</div>
+<div class="text-left">
+<p class="font-semibold">Take a photo of a symptom</p>
+<p class="text-xs text-slate-500">Visual analysis and tracking</p>
+</div>
+</button>
+<button class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm transition-active active:scale-[0.98]">
+<div class="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">upload_file</span>
+</div>
+<div class="text-left">
+<p class="font-semibold">Upload a medical file</p>
+<p class="text-xs text-slate-500">PDFs, lab results, and reports</p>
+</div>
+</button>
+</div>
+</div>
+<div class="mb-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold">Recent Conversations</h3>
+<button class="text-primary text-sm font-semibold">View All</button>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-4 bg-white/50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800">
+<div class="flex flex-col">
+<span class="font-medium">Managing seasonal allergies</span>
+<span class="text-xs text-slate-500 uppercase tracking-wider">Yesterday • 2:30 PM</span>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-white/50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800">
+<div class="flex flex-col">
+<span class="font-medium">Lab results analysis</span>
+<span class="text-xs text-slate-500 uppercase tracking-wider">Oct 24 • 10:15 AM</span>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-0 left-0 right-0 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-4 pb-6 pt-2">
+<div class="max-w-2xl mx-auto flex flex-col gap-4">
+<div class="relative">
+<input class="w-full h-14 pl-5 pr-14 rounded-full border-none bg-white dark:bg-slate-900 shadow-lg focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-100" placeholder="Type a message..." type="text"/>
+<button class="absolute right-2 top-2 size-10 rounded-full bg-primary text-white flex items-center justify-center">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+<nav class="flex justify-around items-center pt-2">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">home</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-600" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">History</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-600" href="#">
+<span class="material-symbols-outlined">folder_shared</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Files</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-600" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Settings</span>
+</a>
+</nav>
+</div>
+</div>
+</div>
+</body></html>

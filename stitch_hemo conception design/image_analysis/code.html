@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hemo - Image Analysis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4bbe4f",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#141e15",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .shutter-inner {
+            box-shadow: 0 0 0 4px white inset;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between p-4 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-10">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold flex-1 text-center">Image Analysis</h1>
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100">help</span>
+</button>
+</header>
+<main class="flex-1 flex flex-col gap-6 pb-24">
+<!-- Viewfinder Section -->
+<section class="px-4 pt-2">
+<div class="relative aspect-[3/4] w-full bg-slate-200 dark:bg-slate-800 rounded-xl overflow-hidden border-2 border-primary/20 shadow-xl">
+<!-- Mock Camera Preview -->
+<div class="absolute inset-0 bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center overflow-hidden" data-alt="Blurred medical background for camera preview simulation" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD-4DNpimrFdWkE0av-3wBcz_z-Szau_nWflvwhCP3ssFAt8CJZ8okRsWS2TqkV1BQLRv4JVWTVEkzlPNr4gDh-U3ckR6SZFnb--ogOUjvzk7Mr235O-NMojmjSxFRmFH7voycxSBhEOa93SFxHaMwQIMqiwEXDY7dW_7RCV9xuDTr-LCYt2YBw_ttEK-IhA36VAefPe4X5vLBjmG8-BamxaOZzYeoyRZPyLqeaMq58FaofCUmmq1CHFg8GaUdGM35DkCnFnhAdp0w"); background-size: cover; background-position: center;'>
+<!-- Viewfinder Focus Corners -->
+<div class="absolute top-8 left-8 w-12 h-12 border-t-4 border-l-4 border-white/60 rounded-tl-lg"></div>
+<div class="absolute top-8 right-8 w-12 h-12 border-t-4 border-r-4 border-white/60 rounded-tr-lg"></div>
+<div class="absolute bottom-8 left-8 w-12 h-12 border-b-4 border-l-4 border-white/60 rounded-bl-lg"></div>
+<div class="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-white/60 rounded-br-lg"></div>
+<!-- Analysis Scanner Line (Static representation) -->
+<div class="absolute inset-x-0 h-0.5 bg-primary/40 shadow-[0_0_15px_rgba(75,190,79,0.8)] top-1/2"></div>
+</div>
+<!-- Overlay Controls -->
+<div class="absolute bottom-6 inset-x-0 flex justify-center items-center gap-10">
+<button class="flex flex-col items-center gap-1 text-white drop-shadow-md">
+<span class="material-symbols-outlined text-3xl">flash_on</span>
+</button>
+<!-- Large Shutter Button -->
+<button class="size-20 bg-white rounded-full flex items-center justify-center p-1.5 shadow-2xl active:scale-95 transition-transform">
+<div class="size-full border-2 border-slate-900 rounded-full bg-white shutter-inner"></div>
+</button>
+<button class="flex flex-col items-center gap-1 text-white drop-shadow-md">
+<span class="material-symbols-outlined text-3xl">history</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Instructions -->
+<section class="px-6 text-center">
+<h2 class="text-xl font-semibold mb-2">Capture your update</h2>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                Take a clear photo of the wound or medication.<br/>
+                Ensure lighting is bright and the camera is in focus.
+            </p>
+</section>
+<!-- Gallery Upload Button -->
+<section class="px-4">
+<button class="w-full flex items-center justify-center gap-2 py-4 bg-primary/10 dark:bg-primary/20 text-primary font-semibold rounded-xl border border-primary/20 active:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined">image</span>
+                Upload from Gallery
+            </button>
+</section>
+<!-- Guidance Panel -->
+<section class="px-4">
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-primary/10 shadow-sm flex items-center gap-4">
+<div class="size-20 shrink-0 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100" data-alt="Example of a clear medical photograph" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCPkV_L32ymNtIHxinFmI0f7iPCwF7xaS2IvJBpMp5NXUfaOi3EJI4Jh1QqflBHhNsp2Mictre9DNETvAuRGYwu8iVyseo3GmOST7u9p0eYFsxc_ZpO13WUn7At2_kCK24Zi8KkA2orVyuW221zBO9_8YLL1Dqm5CW83rjOIeaHtSSbt1FYeevHwy_FfhQwmaACZq_lnIktguQpopw5cQg0CfYjMiVjb11HllEAfRbRhs7vl1lqSMxAoUWg0tig2GmInvMNio1mqOk"); background-size: cover; background-position: center;'>
+</div>
+<div>
+<div class="flex items-center gap-1 text-primary mb-1">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+<span class="text-xs font-bold uppercase tracking-wider">Example Guidance</span>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400">Keep the area centered and avoid heavy shadows for the best AI analysis results.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 px-4 py-2 pb-6 flex justify-between items-center z-20">
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">photo_camera</span>
+<span class="text-[10px] font-medium">Analyze</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="text-[10px] font-medium">Logs</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</nav>
+</body></html>

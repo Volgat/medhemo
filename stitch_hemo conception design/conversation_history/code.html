@@ -1,0 +1,174 @@
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4bbe4f",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#141e15",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>Hemo - Conversation History</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="max-w-md mx-auto min-h-screen flex flex-col bg-white dark:bg-background-dark shadow-xl overflow-hidden relative">
+<!-- Header Section -->
+<header class="p-6 pb-2">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="bg-primary/20 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary font-bold">bloodtype</span>
+</div>
+<h1 class="text-2xl font-bold tracking-tight">Hemo</h1>
+</div>
+<button class="bg-background-light dark:bg-slate-800 p-2 rounded-full hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+<!-- Search Bar -->
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors text-2xl">search</span>
+</div>
+<input class="w-full bg-background-light dark:bg-slate-800 border-none rounded-xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-primary/50 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 transition-all" placeholder="Search your history..." type="text"/>
+</div>
+</header>
+<!-- Conversation List -->
+<main class="flex-1 px-4 py-2 space-y-4 overflow-y-auto">
+<h2 class="px-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Recent Consultations</h2>
+<!-- Item 1: Fever (English) - Swipe Archive Visualized -->
+<div class="relative group">
+<!-- Archive Action Background -->
+<div class="absolute inset-0 bg-primary flex items-center justify-end rounded-xl px-6">
+<span class="material-symbols-outlined text-white">archive</span>
+</div>
+<!-- Main Card -->
+<div class="relative flex items-center gap-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-xl hover:shadow-md transition-all -translate-x-12 cursor-pointer">
+<div class="bg-primary/10 p-3 rounded-lg shrink-0">
+<span class="material-symbols-outlined text-primary">chat_bubble</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="text-base font-semibold truncate">Fever (English)</h3>
+<span class="text-xs text-slate-400 font-medium">Yesterday</span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs">translate</span> English
+                        </p>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-slate-300">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Item 2: Skin Rash (French) - Swipe Delete Visualized -->
+<div class="relative group">
+<!-- Delete Action Background -->
+<div class="absolute inset-0 bg-red-500 flex items-center justify-start rounded-xl px-6">
+<span class="material-symbols-outlined text-white">delete</span>
+</div>
+<!-- Main Card -->
+<div class="relative flex items-center gap-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-xl hover:shadow-md transition-all translate-x-12 cursor-pointer">
+<div class="bg-primary/10 p-3 rounded-lg shrink-0">
+<span class="material-symbols-outlined text-primary">chat_bubble</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="text-base font-semibold truncate">Skin Rash (French)</h3>
+<span class="text-xs text-slate-400 font-medium">Oct 12</span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs">translate</span> French
+                        </p>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-slate-300">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Item 3: Fatigue (German) -->
+<div class="relative flex items-center gap-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-xl hover:shadow-md transition-all cursor-pointer">
+<div class="bg-primary/10 p-3 rounded-lg shrink-0">
+<span class="material-symbols-outlined text-primary">chat_bubble</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="text-base font-semibold truncate">Fatigue (German)</h3>
+<span class="text-xs text-slate-400 font-medium">Oct 08</span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs">translate</span> German
+                    </p>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-slate-300">chevron_right</span>
+</div>
+</div>
+<!-- Item 4: Headache (Spanish) -->
+<div class="relative flex items-center gap-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-xl hover:shadow-md transition-all cursor-pointer opacity-80">
+<div class="bg-primary/10 p-3 rounded-lg shrink-0">
+<span class="material-symbols-outlined text-primary">chat_bubble</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h3 class="text-base font-semibold truncate">Headache (Spanish)</h3>
+<span class="text-xs text-slate-400 font-medium">Sep 30</span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs">translate</span> Spanish
+                    </p>
+</div>
+<div class="shrink-0">
+<span class="material-symbols-outlined text-slate-300">chevron_right</span>
+</div>
+</div>
+</main>
+<!-- FAB for new chat -->
+<div class="absolute bottom-24 right-6">
+<button class="bg-primary text-white size-14 rounded-full shadow-lg shadow-primary/40 flex items-center justify-center hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="border-t border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-3">
+<div class="flex items-center justify-between">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-[1]">forum</span>
+<span class="text-[10px] font-bold">Chats</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">favorite</span>
+<span class="text-[10px] font-medium">Health</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="text-[10px] font-medium">Explore</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</a>
+</div>
+</nav>
+</div>
+</body></html>

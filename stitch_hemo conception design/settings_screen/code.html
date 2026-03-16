@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4bbe4f",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#141e15",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-radio {
+            --radio-dot-svg: url('data:image/svg+xml,%3csvg viewBox=%270 0 16 16%27 fill=%27%234bbe4f%27 xmlns=%27http://www.w3.org/2000/svg%27%3e%3ccircle cx=%278%27 cy=%278%27 r=%274%27/%3e%3c/svg%3e');
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex h-auto min-h-screen w-full max-w-md mx-auto flex-col bg-background-light dark:bg-background-dark overflow-x-hidden pb-24">
+<!-- Header -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 sticky top-0 z-10 border-b border-primary/10">
+<button class="text-slate-900 dark:text-slate-100 flex size-10 items-center justify-center hover:bg-primary/10 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight flex-1 ml-2">Settings</h2>
+<div class="size-10"></div> <!-- Spacer for balance -->
+</div>
+<div class="flex flex-col gap-6 p-4">
+<!-- Language Section -->
+<section>
+<h2 class="text-slate-900 dark:text-slate-100 text-2xl font-bold leading-tight tracking-tight px-1 pb-4">Language</h2>
+<div class="flex flex-col gap-3">
+<label class="flex items-center gap-4 rounded-xl border border-primary/20 bg-white dark:bg-slate-800/50 p-4 flex-row-reverse cursor-pointer hover:border-primary transition-all group">
+<input checked="" class="h-5 w-5 border-2 border-primary/30 bg-transparent text-transparent checked:border-primary checked:bg-[image:var(--radio-dot-svg)] focus:outline-none focus:ring-0 focus:ring-offset-0 custom-radio" name="language" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold">English</p>
+</div>
+</label>
+<label class="flex items-center gap-4 rounded-xl border border-primary/10 bg-white dark:bg-slate-800/50 p-4 flex-row-reverse cursor-pointer hover:border-primary transition-all group">
+<input class="h-5 w-5 border-2 border-primary/30 bg-transparent text-transparent checked:border-primary checked:bg-[image:var(--radio-dot-svg)] focus:outline-none focus:ring-0 focus:ring-offset-0 custom-radio" name="language" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold">French</p>
+</div>
+</label>
+<label class="flex items-center gap-4 rounded-xl border border-primary/10 bg-white dark:bg-slate-800/50 p-4 flex-row-reverse cursor-pointer hover:border-primary transition-all group">
+<input class="h-5 w-5 border-2 border-primary/30 bg-transparent text-transparent checked:border-primary checked:bg-[image:var(--radio-dot-svg)] focus:outline-none focus:ring-0 focus:ring-offset-0 custom-radio" name="language" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold">Ewe</p>
+</div>
+</label>
+</div>
+</section>
+<!-- Voice Section -->
+<section>
+<h2 class="text-slate-900 dark:text-slate-100 text-2xl font-bold leading-tight tracking-tight px-1 pb-4">Voice</h2>
+<div class="rounded-xl bg-white dark:bg-slate-800/50 p-4 border border-primary/10">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold">Read answers aloud</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Automated voice narration for health tips</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Accessibility Section -->
+<section>
+<h2 class="text-slate-900 dark:text-slate-100 text-2xl font-bold leading-tight tracking-tight px-1 pb-4">Accessibility</h2>
+<div class="rounded-xl bg-white dark:bg-slate-800/50 p-6 border border-primary/10">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold">Text size</p>
+<span class="text-primary text-sm font-medium">Medium</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-xs text-slate-400">A</span>
+<input class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary" max="100" min="0" type="range" value="50"/>
+<span class="text-xl text-slate-400 font-bold">A</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Privacy Section -->
+<section>
+<h2 class="text-slate-900 dark:text-slate-100 text-2xl font-bold leading-tight tracking-tight px-1 pb-4">Privacy</h2>
+<a class="flex items-center justify-between rounded-xl bg-white dark:bg-slate-800/50 p-4 border border-primary/10 hover:border-primary/40 transition-all" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">security</span>
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold">How we protect your data</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</a>
+</section>
+<!-- Version Info -->
+<div class="mt-8 flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 pb-8">
+<p class="text-xs font-medium uppercase tracking-widest">Hemo App</p>
+<p class="text-sm">Version 2.4.0 (2023)</p>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50">
+<div class="flex gap-2 border-t border-primary/10 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 pb-6 pt-3">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-xs font-medium">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">history</span>
+<p class="text-xs font-medium">History</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<p class="text-xs font-medium">Resources</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">settings</span>
+<p class="text-xs font-medium">Settings</p>
+</a>
+</div>
+</div>
+</div>
+</body></html>

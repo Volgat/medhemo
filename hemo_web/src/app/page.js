@@ -25,6 +25,7 @@ export default function UnifiedPage() {
   const [isLoading, setIsLoading]   = useState(false);
   const [history, setHistory]       = useState([]);      // API history (role/content pairs)
   const [msgHistory, setMsgHistory] = useState([]);      // UI entries for sidebar
+  const [loggedUser, setLoggedUser] = useState(null);
 
   // Sidebar config (temperature, max tokens, TTS lang, streaming, lang, expert mode)
   const [config, setConfig] = useState(DEFAULT_CONFIG);
@@ -53,6 +54,11 @@ export default function UnifiedPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("hemo_user");
+    if (saved) setLoggedUser(JSON.parse(saved));
+  }, []);
 
   // ── TTS ─────────────────────────────────────────────────────────────────────
   const playTTS = useCallback(async (text) => {
@@ -191,6 +197,11 @@ export default function UnifiedPage() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("hemo_user");
+    setLoggedUser(null);
+  };
+
   const clearChat = () => {
     setMessages([{ role: "assistant", content: "Conversation réinitialisée. Comment puis-je vous aider ?" }]);
     setHistory([]);
@@ -231,7 +242,27 @@ export default function UnifiedPage() {
           />
           <h1 style={{ marginLeft: 8 }}>Hemo</h1>
           <span className="status-badge" style={{ color: statusColor }}>{statusLabel}</span>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: 'center' }}>
+            {loggedUser ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                <span>{loggedUser.username}</span>
+                <button onClick={handleLogout} style={{ color: 'var(--accent)', fontSize: '0.75rem' }}>Déconnexion</button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => router.push("/auth")}
+                style={{ 
+                  background: 'var(--accent)', 
+                  color: 'white', 
+                  padding: '6px 16px', 
+                  borderRadius: '20px', 
+                  fontSize: '0.85rem',
+                  fontWeight: '600'
+                }}
+              >
+                S'identifier
+              </button>
+            )}
             <button className="icon-action-btn" onClick={clearChat} title="Nouvelle conversation">
               <RotateCcw size={14} />
             </button>
@@ -340,7 +371,7 @@ export default function UnifiedPage() {
                 const item = [...e.clipboardData.items].find(i => i.type.startsWith("image/"));
                 if (item) { e.preventDefault(); pickImage(item.getAsFile()); }
               }}
-              placeholder={convMode ? "Mode conversation actif..." : "Posez votre question à Dr. Hemo..."}
+              placeholder={convMode ? "Mode conversation actif..." : "Posez votre question à Hemo..."}
               disabled={isLoading || convMode}
             />
 

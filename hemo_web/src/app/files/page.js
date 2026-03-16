@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { FileText, Upload, RotateCcw } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function FilesPage() {
   const [file, setFile] = useState(null);
@@ -98,7 +98,7 @@ export default function FilesPage() {
         <div className="tool-page">
           <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.6 }}>
             Téléchargez vos résultats d&apos;analyse médicale, ordonnances ou comptes-rendus (PDF ou image).
-            Dr. Hemo vous fournira un résumé clair et des explications adaptées.
+            Hemo vous fournira un résumé clair et des explications adaptées.
           </p>
 
           {/* Hidden input */}
@@ -145,7 +145,7 @@ export default function FilesPage() {
               </>
             ) : (
               <>
-                <Upload size={18} /> Générer un résumé avec Dr. Hemo
+                <Upload size={18} /> Générer un résumé avec Hemo
               </>
             )}
           </button>
@@ -155,7 +155,7 @@ export default function FilesPage() {
             <div className="result-card">
               <div className="result-header">
                 <span>🩸</span>
-                <span>Résumé de Dr. Hemo</span>
+                <span>Résumé de Hemo</span>
               </div>
               <p>{summaryResult}</p>
             </div>

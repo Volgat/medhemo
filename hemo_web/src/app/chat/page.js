@@ -1,11 +1,10 @@
-"use client";
-
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Send, Mic, RotateCcw } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import DrHemoAvatar from "@/components/DrHemoAvatar";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 function formatMessage(text) {
   // Simple markdown-like rendering
@@ -16,14 +15,14 @@ function formatMessage(text) {
     .replace(/\n/g, "<br />");
 }
 
-export default function ChatPage() {
+function ChatContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [messages, setMessages] = useState([
     {
       role: "assistant",
       content:
-        "Bonjour ! Je suis **Dr. Hemo**, votre assistant médical spécialisé en drépanocytose. Comment puis-je vous aider aujourd'hui ?",
+        "Bonjour ! Je suis **Hemo**, votre assistant médical personnel. Comment puis-je vous aider aujourd'hui ?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -82,7 +81,7 @@ export default function ChatPage() {
         {
           role: "assistant",
           content:
-            "Désolé, je rencontre des difficultés de connexion. Vérifiez que le backend est démarré sur le port 8000.",
+            "Désolé, je rencontre des difficultés de connexion. Vérifiez que le backend est démarré.",
         },
       ]);
     } finally {
@@ -95,7 +94,7 @@ export default function ChatPage() {
     setMessages([
       {
         role: "assistant",
-        content: "Bonjour ! Je suis **Dr. Hemo**. Comment puis-je vous aider ?",
+        content: "Bonjour ! Je suis **Hemo**. Comment puis-je vous aider ?",
       },
     ]);
     setHistory([]);
@@ -108,21 +107,10 @@ export default function ChatPage() {
       <main className="main-content">
         {/* Header */}
         <div className="page-header">
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              background: "linear-gradient(135deg, #10a37f, #0a7c61)",
-              borderRadius: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "1rem",
-            }}
-          >
-            🩸
+          <div style={{ marginRight: "10px" }}>
+            <DrHemoAvatar size={32} />
           </div>
-          <h1>Dr. Hemo — Chat</h1>
+          <h1>Hemo — Chat</h1>
           <span
             className="status-badge"
             style={{ color: isLoading ? "var(--warning)" : "var(--accent)" }}
@@ -159,12 +147,12 @@ export default function ChatPage() {
         <div className="chat-messages">
           {messages.map((msg, i) => (
             <div key={i} className={`message-row ${msg.role}`}>
-              <div className={`msg-avatar ${msg.role === "assistant" ? "ai-avatar" : "user-avatar"}`}>
-                {msg.role === "assistant" ? "🩸" : "U"}
+              <div className={`msg-avatar ${msg.role === "assistant" ? "" : "user-avatar"}`}>
+                {msg.role === "assistant" ? <DrHemoAvatar size={28} /> : "U"}
               </div>
               <div className="message-bubble">
                 {msg.role === "assistant" && (
-                  <div className="message-name">Dr. Hemo</div>
+                  <div className="message-name">Hemo</div>
                 )}
                 <div
                   dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }}
@@ -175,9 +163,11 @@ export default function ChatPage() {
 
           {isLoading && (
             <div className="message-row ai">
-              <div className="msg-avatar ai-avatar">🩸</div>
+              <div className="msg-avatar">
+                <DrHemoAvatar size={28} isLoading={true} />
+              </div>
               <div className="message-bubble">
-                <div className="message-name">Dr. Hemo</div>
+                <div className="message-name">Hemo</div>
                 <div className="typing-indicator">
                   <div className="typing-dot" />
                   <div className="typing-dot" />
@@ -200,7 +190,7 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-              placeholder="Posez votre question à Dr. Hemo..."
+              placeholder="Posez votre question à Hemo..."
               disabled={isLoading}
             />
             <button
@@ -224,10 +214,27 @@ export default function ChatPage() {
             </button>
           </div>
           <p className="input-hint">
-            Dr. Hemo peut faire des erreurs. Consultez toujours un professionnel de santé.
+            Hemo peut faire des erreurs. Consultez toujours un professionnel de santé.
           </p>
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="app-shell">
+        <Sidebar />
+        <main className="main-content">
+          <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <div className="spinner" style={{ width: 40, height: 40 }} />
+          </div>
+        </main>
+      </div>
+    }>
+      <ChatContent />
+    </Suspense>
   );
 }

@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { Camera, Upload, RotateCcw } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function VisionPage() {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -169,7 +169,7 @@ export default function VisionPage() {
                 </>
               ) : (
                 <>
-                  <Upload size={18} /> Analyser avec Dr. Hemo
+                  <Upload size={18} /> Analyser avec Hemo
                 </>
               )}
             </button>

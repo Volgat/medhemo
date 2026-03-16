@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Mic, Square } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export default function VoicePage() {
   const [isRecording, setIsRecording] = useState(false);
@@ -87,7 +87,7 @@ export default function VoicePage() {
     : isProcessing
     ? "Analyse en cours..."
     : aiResponse
-    ? "Réponse de Dr. Hemo"
+    ? "Réponse de Hemo"
     : "Appuyez sur le micro pour parler";
 
   return (
@@ -183,7 +183,7 @@ export default function VoicePage() {
                       marginBottom: "6px",
                     }}
                   >
-                    Dr. Hemo répond :
+                    Hemo répond :
                   </div>
                   <p className="ai-resp">{aiResponse}</p>
                 </div>

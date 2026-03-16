@@ -12,12 +12,7 @@ import {
 // ── Default config ────────────────────────────────────────────────────────────
 export const DEFAULT_CONFIG = {
   ttsEnabled:    true,
-  ttsLang:       "fr",
-  temperature:   0.65,
-  maxTokens:     700,
-  streamMode:    false,
-  systemLang:    "fr",
-  expertMode:    false,
+  voiceType:     "lila",
   theme:         "dark",
 };
 
@@ -118,7 +113,7 @@ function Toggle({ checked, onChange, label }) {
 }
 
 // ── Main Sidebar ──────────────────────────────────────────────────────────────
-export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, history = [], onClearHistory, onLogout, loggedUser }) {
+export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, history = [], onClearHistory, onLogout, loggedUser, onLogoClick }) {
   const set = (key, value) => {
     onConfigChange?.({ ...config, [key]: value });
     if (key === "theme") {
@@ -130,20 +125,20 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
     <nav className="sidebar">
       {/* Logo */}
       <div className="sidebar-logo" onClick={onLogoClick} style={{ cursor: "pointer" }}>
-        <div className="logo-icon" style={{ background: "linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%)" }}>
-          <span style={{ color: "white", fontSize: "1rem" }}>🩺</span>
+        <div className="logo-icon" style={{ background: "linear-gradient(135deg, #a52a2a 0%, #1a1a1a 100%)" }}>
+          <span style={{ color: "white", fontSize: "1rem" }}>H</span>
         </div>
-        <span>Hemo</span>
+        <span>Hemo Lab</span>
       </div>
 
       {/* History header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", marginTop: 8 }}>
-        <span className="sidebar-section" style={{ margin: 0, padding: 0 }}>Historique</span>
+        <span className="sidebar-section" style={{ margin: 0, padding: 0 }}>History</span>
         {history.length > 0 && (
           <button
             onClick={onClearHistory}
             style={{ color: "var(--text-muted)", display: "flex", cursor: "pointer", border: "none", background: "none", padding: 2, borderRadius: 4, transition: "color 0.15s" }}
-            title="Effacer l'historique"
+            title="Clear history"
             onMouseOver={e => e.currentTarget.style.color = "var(--danger)"}
             onMouseOut={e => e.currentTarget.style.color = "var(--text-muted)"}
           >
@@ -157,7 +152,7 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
         {history.length === 0 ? (
           <div style={{ padding: "10px 8px", fontSize: "0.75rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 8 }}>
             <MessageSquarePlus size={13} />
-            <span>Aucune conversation</span>
+            <span>No conversations</span>
           </div>
         ) : (
           history
@@ -180,29 +175,32 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
       {/* ═══ PARAMÈTRES ═══ */}
       <div style={{ borderTop: "1px solid var(--border)", marginTop: 8, paddingTop: 8 }}>
 
-        <Section title="Voix & Audio" icon={Volume2}>
-          <Toggle label="Lecture vocale" checked={config.ttsEnabled} onChange={v => set("ttsEnabled", v)} />
+        <Section title="Assistant Voice" icon={Volume2}>
+          <Toggle label="Voice playback" checked={config.ttsEnabled} onChange={v => set("ttsEnabled", v)} />
           {config.ttsEnabled && (
             <>
-              <Label>Langue TTS</Label>
-              <SelectInput value={config.ttsLang} onChange={v => set("ttsLang", v)} options={[
-                { value: "fr", label: "🇫🇷 Français" },
-                { value: "en", label: "🇬🇧 English" },
-                { value: "es", label: "🇪🇸 Español" },
+              <Label>Voice Model</Label>
+              <SelectInput value={config.voiceType} onChange={v => set("voiceType", v)} options={[
+                { value: "lila",    label: "👩 Lila (Naturelle)" },
+                { value: "ethan",   label: "👨 Ethan (Naturel)" },
+                { value: "female1", label: "👩 Douce (F)" },
+                { value: "male1",   label: "👨 Calme (M)" },
+                { value: "female2", label: "👩 Pro (F)" },
+                { value: "male2",   label: "👨 Pro (M)" },
               ]} />
             </>
           )}
         </Section>
 
-        <Section title="Génération IA" icon={Thermometer}>
+        <Section title="AI Generation" icon={Thermometer}>
           <RangeInput
-            label="Température"
+            label="Temperature"
             value={config.temperature} onChange={v => set("temperature", v)}
             min={0.1} max={1.5} step={0.05}
           />
           <div style={{ marginTop: 10 }}>
             <RangeInput
-              label="Tokens max"
+              label="Max tokens"
               value={config.maxTokens} onChange={v => set("maxTokens", v)}
               min={100} max={1500} step={50}
             />
@@ -213,19 +211,12 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
         </Section>
 
         <Section title="Interface" icon={Settings2}>
-          <Label>Langue réponses</Label>
-          <SelectInput value={config.systemLang} onChange={v => set("systemLang", v)} options={[
-            { value: "fr",  label: "🇫🇷 Français" },
-            { value: "en",  label: "🇬🇧 English" },
-            { value: "ew",  label: "🌍 Éwé" },
-            { value: "auto",label: "🔄 Automatique" },
-          ]} />
           <div style={{ marginTop: 8 }}>
             <Toggle label="Mode expert" checked={config.expertMode} onChange={v => set("expertMode", v)} />
           </div>
           <div style={{ marginTop: 8 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0" }}>
-              <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>Thème</span>
+              <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>Theme</span>
               <button
                 onClick={() => set("theme", config.theme === "dark" ? "light" : "dark")}
                 style={{
@@ -236,7 +227,7 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
                 }}
               >
                 {config.theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
-                {config.theme === "dark" ? "Clair" : "Sombre"}
+                {config.theme === "dark" ? "Light" : "Dark"}
               </button>
             </div>
           </div>
@@ -244,7 +235,7 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
             <div style={{ marginTop: 6, padding: "6px 8px", background: "var(--accent-muted)", borderRadius: 6, display: "flex", gap: 6, alignItems: "flex-start" }}>
               <Info size={11} style={{ color: "var(--accent)", marginTop: 1, flexShrink: 0 }} />
               <span style={{ fontSize: "0.68rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                Affiche les descriptions visuelles Qwen3-VL et les poids EARCP dans les réponses.
+                Displays Qwen3-VL visual descriptions and EARCP weights in responses.
               </span>
             </div>
           )}
@@ -268,11 +259,11 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
             onMouseOut={e => e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)"}
           >
             <LogOut size={16} />
-            <span>Déconnexion</span>
+            <span>Logout</span>
           </button>
         )}
         <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textAlign: "center" }}>
-          Hemo AI v3.0 · EARCP + FastAPI
+          Hemo Lab v3.0
         </div>
       </div>
     </nav>

@@ -82,7 +82,7 @@ class WelcomeScreen extends StatelessWidget {
                     const Icon(Icons.waving_hand_rounded,
                         color: AppTheme.primary, size: 20),
                     const SizedBox(width: 8),
-                    Text("Salut ! Je suis Dr. Hemo.",
+                    Text("Salut ! Je suis Hemo.",
                         style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,

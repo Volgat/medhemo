@@ -9,7 +9,7 @@ import DrHemoAvatar from "@/components/DrHemoAvatar";
 import LandingPage from "@/components/LandingPage";
 import { useRouter } from "next/navigation";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 function formatMessage(text) {
   return text
@@ -21,9 +21,9 @@ function formatMessage(text) {
 
 export default function UnifiedPage() {
   const router = useRouter();
-  const [showLanding, setShowLanding] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
   const [messages, setMessages]   = useState([
-    { role: "assistant", content: "Bonjour ! Je suis **Hemo**, votre assistant médical intelligent. Je suis là pour vous aider avec vos questions de santé, vos analyses médicales ou même pour suivre votre bien-être au quotidien. Comment puis-je vous aider aujourd'hui ?" },
+    { role: "assistant", content: "Bonjour ! Je suis **Hemo**, votre assistant santé personnel. Comment puis-je vous aider aujourd'hui ?" },
   ]);
   const [input, setInput]           = useState("");
   const [isLoading, setIsLoading]   = useState(false);
@@ -61,7 +61,16 @@ export default function UnifiedPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("hemo_user");
-    if (saved) setLoggedUser(JSON.parse(saved));
+    if (saved) {
+      setLoggedUser(JSON.parse(saved));
+      // Only auto-hide landing if not explicitly requested
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('landing') !== 'true') {
+        setShowLanding(false);
+      }
+    } else {
+      setShowLanding(true);
+    }
   }, []);
 
   // ── TTS ─────────────────────────────────────────────────────────────────────
@@ -72,7 +81,7 @@ export default function UnifiedPage() {
       const res = await fetch(`${API_BASE}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history: [] }),
+        body: JSON.stringify({ message: text, history: [], voice_type: config.voiceType }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -112,6 +121,7 @@ export default function UnifiedPage() {
     form.append("text", msg);
     form.append("history_json", JSON.stringify(history.slice(-10)));
     form.append("tts", config.ttsEnabled.toString());
+    form.append("voice_type", config.voiceType);
     if (audioBlob) form.append("audio", audioBlob, "voice.webm");
     const img = image ?? imageFile;
     if (img) form.append("image", img);
@@ -215,11 +225,11 @@ export default function UnifiedPage() {
   const fmtTime = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
   const statusLabel = isLoading
-    ? "⟳ Traitement..."
-    : isSpeaking  ? "🔊 Parole..."
-    : convMode    ? (isRecording ? "⏺ Écoute..." : "🗣️ Conversation")
-    : isRecording ? "⏺ Enregistrement"
-    : "● En ligne";
+    ? "⟳ Processing..."
+    : isSpeaking  ? "🔊 Speaking..."
+    : convMode    ? (isRecording ? "⏺ Listening..." : "🗣️ Conversation")
+    : isRecording ? "⏺ Recording"
+    : "● Online";
 
   const statusColor = isLoading ? "var(--warning)"
     : isSpeaking             ? "#a78bfa"
@@ -228,15 +238,17 @@ export default function UnifiedPage() {
 
   return (
     <div className="app-shell">
-      <Sidebar
-        config={config}
-        onConfigChange={setConfig}
-        history={msgHistory}
-        onClearHistory={clearChat}
-        onLogout={handleLogout}
-        loggedUser={loggedUser}
-        onLogoClick={() => setShowLanding(true)}
-      />
+      {loggedUser && (
+        <Sidebar
+          config={config}
+          onConfigChange={setConfig}
+          history={msgHistory}
+          onClearHistory={clearChat}
+          onLogout={handleLogout}
+          loggedUser={loggedUser}
+          onLogoClick={() => setShowLanding(true)}
+        />
+      )}
       <audio ref={audioRef} style={{ display: "none" }} />
 
       <main className="main-content">
@@ -299,7 +311,7 @@ export default function UnifiedPage() {
                     {msg.visualDescription && config.expertMode && (
                       <details style={{ marginBottom: 6 }}>
                         <summary style={{ fontSize: "0.72rem", cursor: "pointer", color: "var(--text-muted)" }}>
-                          🔍 Description visuelle LLaVA
+                          🔍 LLaVA Visual Description
                         </summary>
                         <p style={{ fontSize: "0.78rem", lineHeight: 1.6, marginTop: 4, color: "var(--text-secondary)" }}>
                           {msg.visualDescription}
@@ -354,13 +366,13 @@ export default function UnifiedPage() {
                   <span className="rec-dot" />
                   <span style={{ fontSize: "0.8rem", color: "var(--danger)" }}>{fmtTime(recordSeconds)}</span>
                   <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", flex: 1 }}>
-                    {convMode ? "Conversation — parlez..." : "Enregistrement... cliquez ⏹ pour envoyer"}
+                    {convMode ? "Conversation — speak now..." : "Recording... click ⏹ to send"}
                   </span>
                 </div>
               )}
 
               <div className="input-wrapper">
-                <button className="input-icon-btn" title="Joindre une image" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                <button className="input-icon-btn" title="Attach an image" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
                   <Paperclip size={17} />
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => pickImage(e.target.files[0])} />
@@ -376,13 +388,13 @@ export default function UnifiedPage() {
                     const item = [...e.clipboardData.items].find(i => i.type.startsWith("image/"));
                     if (item) { e.preventDefault(); pickImage(item.getAsFile()); }
                   }}
-                  placeholder={convMode ? "Mode conversation actif..." : "Posez votre question à Hemo..."}
+                  placeholder={convMode ? "Conversation mode active..." : "Ask Hemo a question..."}
                   disabled={isLoading || convMode}
                 />
 
                 <button
                   className={`input-icon-btn ${isRecording && !convMode ? "recording" : ""}`}
-                  title={isRecording && !convMode ? "Arrêter et envoyer" : "Dicter un message"}
+                  title={isRecording && !convMode ? "Stop and send" : "Dictate a message"}
                   onClick={() => isRecording && !convMode ? stopRecording() : startRecording(false)}
                   disabled={isLoading || isSpeaking || convMode}
                 >
@@ -391,7 +403,7 @@ export default function UnifiedPage() {
 
                 <button
                   className={`input-icon-btn ${convMode ? "conv-active" : ""}`}
-                  title={convMode ? "Arrêter la conversation" : "Mode conversation continue"}
+                  title={convMode ? "Stop conversation" : "Continuous conversation mode"}
                   onClick={toggleConvMode}
                   disabled={isLoading && !convMode}
                 >
@@ -409,8 +421,8 @@ export default function UnifiedPage() {
 
               <p className="input-hint">
                 <Zap size={10} style={{ display: "inline", marginRight: 3, color: "var(--accent)" }} />
-                Orchestré par EARCP · Assistance médicale universelle · Collez une image directement 
-                {loggedUser && <span style={{ cursor: 'pointer', color: 'var(--accent)', marginLeft: 8 }} onClick={() => setShowLanding(true)}>Retour à l'accueil</span>}
+                MedHemo AI · Personalized Health Insights · Paste an image directly
+                {loggedUser && <span style={{ cursor: 'pointer', color: 'var(--accent)', marginLeft: 8 }} onClick={() => setShowLanding(true)}>Back to Home</span>}
               </p>
             </div>
           </>

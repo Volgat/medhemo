@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Camera, Upload, RotateCcw } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 export default function VisionPage() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState("");
+  const router = useRouter();
   const fileInputRef = useRef(null);
 
   const handleImagePick = (e) => {
@@ -30,7 +32,7 @@ export default function VisionPage() {
     const formData = new FormData();
     // backend expects field name "file"
     formData.append("file", imageFile);
-    formData.append("prompt", "Que voyez-vous sur cette image médicale ? Donnez une analyse détaillée.");
+    formData.append("prompt", "What do you see in this medical image? Provide a detailed analysis.");
 
     try {
       const res = await fetch(`${API_BASE}/api/vision`, { method: "POST", body: formData });
@@ -38,7 +40,7 @@ export default function VisionPage() {
       const data = await res.json();
       setAnalysisResult(data.analysis);
     } catch {
-      setAnalysisResult("Erreur lors de l'analyse. Assurez-vous que le backend est démarré sur le port 8000.");
+      setAnalysisResult("Error during analysis. Make sure the backend is running on port 8000.");
     } finally {
       setIsProcessing(false);
     }
@@ -52,7 +54,7 @@ export default function VisionPage() {
 
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar onLogoClick={() => router.push("/")} />
 
       <main className="main-content" style={{ overflowY: "auto" }}>
         <div className="page-header">
@@ -69,7 +71,7 @@ export default function VisionPage() {
           >
             <Camera size={16} color="white" />
           </div>
-          <h1>Analyse d&apos;Image Médicale</h1>
+          <h1>Analyse d'images</h1>
           {selectedImage && (
             <button
               onClick={reset}
@@ -87,15 +89,15 @@ export default function VisionPage() {
                 cursor: "pointer",
               }}
             >
-              <RotateCcw size={12} /> Réinitialiser
+              <RotateCcw size={12} /> Reset
             </button>
           )}
         </div>
 
         <div className="tool-page">
           <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.6 }}>
-            Sélectionnez une image médicale (radiographie, blessure, résultat d'analyse…) pour que
-            Dr. Hemo vous donne une description et son analyse.
+            Select a medical image (X-ray, wound photo, lab result...) for 
+            Hemo to provide a description and analysis.
           </p>
 
           {/* Hidden file input */}
@@ -136,8 +138,8 @@ export default function VisionPage() {
               onClick={() => fileInputRef.current.click()}
             >
               <Camera size={48} className="dz-icon" style={{ color: "var(--text-muted)" }} />
-              <div className="dz-title">Cliquez pour sélectionner une image</div>
-              <div className="dz-subtitle">PNG, JPG, WEBP — Radios, photos de blessures…</div>
+              <div className="dz-title">Click to select an image</div>
+              <div className="dz-subtitle">PNG, JPG, WEBP — X-rays, injuries...</div>
             </div>
           )}
 
@@ -154,7 +156,7 @@ export default function VisionPage() {
               onClick={() => fileInputRef.current.click()}
             >
               <Camera size={18} color="var(--accent)" />
-              Choisir une image
+              Choose an image
             </button>
 
             <button
@@ -165,11 +167,11 @@ export default function VisionPage() {
             >
               {isProcessing ? (
                 <>
-                  <div className="spinner" /> Analyse en cours...
+                  <div className="spinner" /> Analyzing...
                 </>
               ) : (
                 <>
-                  <Upload size={18} /> Analyser avec Hemo
+                  <Upload size={18} /> Analyze with Hemo
                 </>
               )}
             </button>
@@ -180,7 +182,7 @@ export default function VisionPage() {
             <div className="result-card">
               <div className="result-header">
                 <span>🩸</span>
-                <span>Analyse de Dr. Hemo</span>
+                <span>Analyse Hemo</span>
               </div>
               <p>{analysisResult}</p>
             </div>

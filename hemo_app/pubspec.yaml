@@ -1,5 +1,5 @@
 name: hemo_app
-description: "Hemo - Votre assistant santé IA spécialisé en drépanocytose"
+description: "Hemo - Votre assistant santé IA"
 publish_to: 'none'
 
 version: 1.0.0+1

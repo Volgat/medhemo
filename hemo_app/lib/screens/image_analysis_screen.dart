@@ -39,7 +39,7 @@ class _ImageAnalysisScreenState extends State<ImageAnalysisScreen> {
     try {
       final result = await ApiService.visionQuery(
         imageFile: _selectedImage!,
-        prompt: "Analyse cette image médicale en relation avec la santé et la drépanocytose. Réponds de manière concise.",
+        prompt: "Analyse cette image médicale en relation avec la santé globale. Réponds de manière concise.",
       );
 
       if (mounted) {

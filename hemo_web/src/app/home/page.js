@@ -7,14 +7,14 @@ import Sidebar from "@/components/Sidebar";
 const quickActions = [
   {
     icon: <MessageSquare size={20} color="#10a37f" />,
-    title: "Chat avec Dr. Hemo",
-    subtitle: "Posez vos questions médicales",
-    href: "/chat",
+    title: "Chat avec Hemo",
+    subtitle: "Posez vos questions santé",
+    href: "/",
   },
   {
     icon: <Mic size={20} color="#10a37f" />,
     title: "Interaction Vocale",
-    subtitle: "Parlez directement à Dr. Hemo",
+    subtitle: "Parlez directement à Hemo",
     href: "/voice",
   },
   {
@@ -32,10 +32,10 @@ const quickActions = [
 ];
 
 const suggestions = [
-  "Qu'est-ce que la drépanocytose ?",
-  "Quels sont les symptômes d'une crise vaso-occlusive ?",
-  "Comment gérer la douleur liée à la drépanocytose ?",
-  "Quels aliments sont recommandés pour les personnes drépanocytaires ?",
+  "Quels sont les bienfaits d'une alimentation équilibrée ?",
+  "Comment améliorer la qualité de son sommeil ?",
+  "Quels sont les signes d'une déshydratation ?",
+  "Conseils pour rester en bonne santé au quotidien",
 ];
 
 export default function HomeScreen() {
@@ -66,8 +66,8 @@ export default function HomeScreen() {
             </div>
             <h1 className="welcome-title">Comment puis-je vous aider ?</h1>
             <p className="welcome-subtitle">
-              Je suis <strong style={{ color: "#10a37f" }}>Dr. Hemo</strong>, votre assistant médical IA spécialisé en
-              drépanocytose. Posez vos questions en text ou en vocal.
+              Je suis <strong style={{ color: "#10a37f" }}>Hemo</strong>, votre assistant santé IA.
+              Je suis là pour répondre à vos questions et préoccupations sur la santé.
             </p>
           </div>
 

@@ -2,7 +2,6 @@ import os
 import io
 import json
 import base64
-import asyncio
 import logging
 
 from dotenv import load_dotenv  # type: ignore
@@ -57,10 +56,21 @@ ensemble = get_ensemble()
 logger.info("Ensemble orchestrator initialized.")
 
 
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "message": "Hemo AI Backend is running successfully.",
+        "version": "3.0.0",
+        "api_docs": "/docs"
+    }
+
+
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     message: str
     history: list[dict] = []
+    voice_type: str = "lila"
 
 class UserSignup(BaseModel):
     username: str
@@ -96,14 +106,17 @@ class MultimodalResponse(BaseModel):
     earcp_weights: dict = {}
     history: list[dict] = []
 
-# ── System prompt ──────────────────────────────────────────────────────────────
 def make_system_prompt() -> str:
     return (
-        "Tu es Dr. Hemo, un assistant médical bienveillant et expert en drépanocytose (anémie falciforme) "
-        "et en santé générale. "
-        "Réponds TOUJOURS dans la même langue que l'utilisateur (français, anglais, éwé, etc.). "
-        "Sois clair, empathique et précis. Structure tes réponses si nécessaire (listes, étapes). "
-        "Rappelle toujours à l'utilisateur de consulter un professionnel de santé pour tout diagnostic."
+        "You are Hemo, a caring and versatile health assistant dedicated to providing "
+        "personalized health insights and general wellness support. "
+        "Your goal is to assist the user with their health questions and concerns in a natural, empathetic way. "
+        "Only introduce yourself when it is appropriate to do so (like at the start of a conversation "
+        "or if the user asks who you are). Vary your greeting and introduction phrases to avoid being repetitive. "
+        "ALWAYS detect the user's language based on their input and respond in that same language. "
+        "If they speak French, reply in French. If they speak English, reply in English. "
+        "Be clear and precise. Structure your answers if necessary (lists, steps). "
+        "Always remind the user to consult a healthcare professional for any medical diagnosis or treatment."
     )
 
 # ── Core AI helpers ───────────────────────────────────────────────────────────
@@ -132,7 +145,7 @@ async def call_medgemma(prompt: str, history: list[dict] | None = None) -> str:
 
     if resp.status_code != 200:
         logger.error(f"MedGemma/Gemma-3 {resp.status_code}: {resp.text[:200]}")
-        return "Je suis désolé, le service IA est temporairement indisponible. Veuillez réessayer."
+        return "I'm sorry, the AI service is temporarily unavailable. Please try again."
 
     data = resp.json()
     return data["choices"][0]["message"]["content"].strip()
@@ -244,6 +257,7 @@ async def call_multimodal_analysis(
     image_bytes: bytes,
     user_question: str,
     history: list[dict] | None = None,
+    voice_type: str = "female1",
 ) -> tuple[str, str]:
     if history is None:
         history = []
@@ -252,20 +266,20 @@ async def call_multimodal_analysis(
 
     if visual_description:
         medgemma_prompt = (
-            f"[DESCRIPTION VISUELLE DE L'IMAGE]\n{visual_description}\n\n"
-            f"[QUESTION DE L'UTILISATEUR]\n{user_question}\n\n"
-            "En tant que Dr. Hemo, donne une analyse médicale approfondie de cette image "
-            "en te basant sur la description visuelle ci-dessus. "
-            "Identifie les éléments médicaux pertinents, explique ce qu'ils signifient "
-            "dans le contexte de la drépanocytose ou de la santé générale, et donne des conseils pratiques. "
-            "Structure ta réponse clairement."
+            f"[VISUAL DESCRIPTION OF THE IMAGE]\n{visual_description}\n\n"
+            f"[USER QUESTION]\n{user_question}\n\n"
+            f"As Hemo, provide an in-depth health analysis of this image "
+            "based on the visual description above. "
+            "Identify relevant medical elements, explain what they mean "
+            "in the context of general health, and give practical advice. "
+            "Structure your response clearly."
         )
     else:
         medgemma_prompt = (
-            f"[Image médicale soumise — analyse visuelle indisponible]\n"
-            f"[QUESTION DE L'UTILISATEUR]\n{user_question}\n\n"
-            "Réponds à la question médicale de l'utilisateur même sans accès à l'image. "
-            "Demande-lui de décrire ce qu'il voit si possible."
+            f"[Medical image submitted — visual analysis unavailable]\n"
+            f"[USER QUESTION]\n{user_question}\n\n"
+            "Answer the user's medical question even without access to the image. "
+            "Ask them to describe what they see if possible."
         )
 
     medical_analysis = await call_medgemma(medgemma_prompt, history)
@@ -292,21 +306,63 @@ async def call_whisper(audio_bytes: bytes) -> str:
     return text
 
 
-async def synthesize_tts(text: str, lang: str = "fr") -> bytes:
+async def synthesize_tts(text: str, voice_type: str = "lila") -> bytes:
     """
-    Generate TTS audio using gTTS and return MP3 bytes.
-    Falls back to empty bytes on error.
+    Generate high-quality TTS audio with auto-language detection.
+    Supports 6 voices: lila, ethan, female1, male1, female2, male2.
+    Uses edge-tts for speed and high-quality neural voices.
     """
     try:
-        from gtts import gTTS  # type: ignore
-        tts = gTTS(text=text[:500], lang=lang, slow=False)
-        buf = io.BytesIO()
-        tts.write_to_fp(buf)
-        buf.seek(0)
-        logger.info(f"TTS synthesized ({len(text)} chars)")
-        return buf.read()
+        import edge_tts
+        from langdetect import detect
+
+        # Robust language detection
+        try:
+            lang = detect(text)
+        except Exception:
+            lang = "fr"
+        
+        # Mapping voices to edge-tts neural voices
+        # We select the most "natural" sounding ones available in edge-tts
+        # for both major languages (EN/FR).
+        voice_map = {
+            "fr": {
+                "lila":    "fr-FR-DeniseNeural",
+                "ethan":   "fr-FR-HenriNeural",
+                "female1": "fr-CH-ArianeNeural",
+                "female2": "fr-BE-CharlineNeural",
+                "male1":   "fr-CA-JeanNeural",
+                "male2":   "fr-FR-RemyMultilingualNeural",
+            },
+            "en": {
+                "lila":    "en-US-AvaNeural",
+                "ethan":   "en-GB-ThomasNeural",
+                "female1": "en-US-EmmaNeural",
+                "female2": "en-AU-NatashaNeural",
+                "male1":   "en-US-AndrewNeural",
+                "male2":   "en-IE-ConnorNeural",
+            }
+        }
+
+        # Fallback to English if language not supported
+        lang_key = "fr" if lang.startswith("fr") else "en"
+        voices_for_lang = voice_map.get(lang_key, voice_map["en"])
+        
+        # Select voice_id
+        voice_id = voices_for_lang.get(voice_type.lower(), voices_for_lang["lila"])
+
+        # Create audio stream
+        communicate = edge_tts.Communicate(text[:1000], voice_id)
+        audio_data = b""
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_data += chunk["data"]
+        
+        logger.info(f"TTS generated for '{voice_type}' in '{lang_key}' ({len(audio_data)} bytes)")
+        return audio_data
+
     except Exception as e:
-        logger.warning(f"TTS failed: {e}")
+        logger.error(f"TTS Synthesis Error: {e}")
         return b""
 
 
@@ -414,7 +470,7 @@ async def audio_query(
 @app.post("/api/vision", response_model=VisionResponse)
 async def vision_query(
     file: UploadFile = File(...),
-    prompt: str = Form(default="Analyse cette image médicale."),
+    prompt: str = Form(default="Analyze this medical image."),
     history_json: str = Form(default="[]"),
 ):
     """Multimodal image analysis: LLaVA + MedGemma."""
@@ -431,7 +487,7 @@ async def vision_query(
     )
 
     combined = (
-        f"**Analyse visuelle :**\n{visual_description}\n\n**Analyse médicale :**\n{medical_analysis}"
+        f"**Visual Analysis:**\n{visual_description}\n\n**Medical Analysis:**\n{medical_analysis}"
         if visual_description
         else medical_analysis
     )
@@ -446,26 +502,21 @@ async def vision_query(
 @app.post("/api/tts")
 async def text_to_speech(req: ChatRequest):
     """
-    Convert text to speech using gTTS.
+    Convert text to speech.
     Returns MP3 audio bytes as base64 in JSON for easy frontend use.
     """
     text = req.message
+    voice_type = req.voice_type
     if not text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty.")
 
-    # Detect language (basic heuristic)
-    lang = "fr"
-    english_words = {"the", "is", "are", "this", "that", "what", "how", "when", "where"}
-    words = set(text.lower().split()[:10])
-    if words & english_words:
-        lang = "en"
-
-    audio_bytes = await synthesize_tts(text, lang=lang)
+    # We use synthesize_tts which now handles lang detection and 6-voice mapping
+    audio_bytes = await synthesize_tts(text, voice_type=voice_type)
     if not audio_bytes:
         raise HTTPException(status_code=500, detail="TTS synthesis failed.")
 
     audio_b64 = base64.b64encode(audio_bytes).decode()
-    return {"audio_b64": audio_b64, "format": "mp3", "lang": lang}
+    return {"audio_b64": audio_b64, "format": "mp3"}
 
 
 @app.post("/api/multimodal", response_model=MultimodalResponse)
@@ -473,6 +524,7 @@ async def multimodal_unified(
     text: str = Form(default=""),
     history_json: str = Form(default="[]"),
     tts: str = Form(default="false"),
+    voice_type: str = Form(default="lila"),
     image: UploadFile | None = File(default=None),
     audio: UploadFile | None = File(default=None),
 ):
@@ -519,9 +571,6 @@ async def multimodal_unified(
     
     transcription = None
     if audio is not None:
-        audio_bytes = await audio.read()
-        # In a real scenario, we save to temp or pass bytes. 
-        # For simplicity, we use the ensemble's router logic.
         import tempfile
         with tempfile.NamedTemporaryFile(suffix=".webm", delete=False, mode='wb') as f:
             f.write(audio_bytes)
@@ -532,15 +581,13 @@ async def multimodal_unified(
 
     visual_description = None
     if image is not None:
-        image_bytes = await image.read()
-        image_b64 = base64.b64encode(image_bytes).decode()
         vision_out = ensemble.process_vision(image_b64, text)
         visual_description = vision_out.get("visual_description")
 
     # Generate final response
-    prompt = text or (transcription if transcription else "Analyse cette image.")
+    prompt = text or (transcription if transcription else "Analyze this image.")
     if visual_description:
-        prompt = f"Description visuelle: {visual_description}\nUtilisateur: {prompt}"
+        prompt = f"Visual description: {visual_description}\nUser: {prompt}"
 
     ai_response = await call_medgemma(prompt, history)
     earcp_weights = ensemble.get_weights()
@@ -555,14 +602,14 @@ async def multimodal_unified(
         user_content += f"\n[Image analysée — {len(visual_description)} chars de description visuelle]"
 
     updated_history = history + [
-        {"role": "user", "content": user_content or "Analyse cette image médicale."},
+        {"role": "user", "content": user_content or "Analyze this medical image."},
         {"role": "assistant", "content": ai_response},
     ]
 
     # ── Step 6: Optional TTS ──────────────────────────────────────────────────
     audio_b64_res = None
     if tts.lower() == "true":
-        tts_bytes = await synthesize_tts(ai_response)
+        tts_bytes = await synthesize_tts(ai_response, voice_type=voice_type)
         if tts_bytes:
             audio_b64_res = base64.b64encode(tts_bytes).decode()
 
@@ -589,22 +636,14 @@ async def analyze_file(
     file_bytes = await file.read()
 
     if "image" in content_type:
-        q = prompt or "Analysez ce document médical et fournissez un résumé clair avec les points clés."
-        visual_desc, medical = await call_multimodal_analysis(file_bytes, q)
-        summary = (
-            f"**Description :** {visual_desc}\n\n**Analyse :** {medical}"
-            if visual_desc
-            else medical
-        )
-        return {"summary": summary, "visual_description": visual_desc, "filename": file.filename}
-    else:
-        q = (
-            prompt
-            or f"Document médical : {file.filename}. "
-               "Fournis un résumé détaillé et des conseils liés à la drépanocytose."
-        )
-        summary = await call_medgemma(q)
-        return {"summary": summary, "visual_description": "", "filename": file.filename}
+        q = prompt or "Analyze this medical document and provide a clear summary with key points."
+        visual_desc, medical = await call_multimodal_analysis(file_bytes, q, voice_type="female1")
+        return {"summary": medical, "visual_description": visual_desc, "filename": file.filename}
+    
+    # PDF/Document handling
+    q = prompt or "Medical document: {file.filename}. Provide a detailed summary."
+    summary = await call_medgemma(q)
+    return {"summary": summary, "visual_description": "", "filename": file.filename}
 
 
 @app.get("/api/earcp/weights")

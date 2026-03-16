@@ -36,6 +36,7 @@ def deploy():
     files_to_upload = [
         "main.py",
         "earcp_orchestrator.py",
+        "database.py",
         "requirements.txt",
         "Dockerfile"
     ]

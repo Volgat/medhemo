@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { FileText, Upload, RotateCcw } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 export default function FilesPage() {
   const [file, setFile] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [summaryResult, setSummaryResult] = useState("");
+  const router = useRouter();
   const fileInputRef = useRef(null);
 
   const handleFilePick = (e) => {
@@ -36,7 +38,7 @@ export default function FilesPage() {
       // Backend returns { summary, filename }
       setSummaryResult(data.summary);
     } catch {
-      setSummaryResult("Erreur lors de l'analyse du document. Assurez-vous que le backend est démarré sur le port 8000.");
+      setSummaryResult("Error during document analysis. Make sure the backend is running on port 8000.");
     } finally {
       setIsProcessing(false);
     }
@@ -55,7 +57,7 @@ export default function FilesPage() {
 
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar onLogoClick={() => router.push("/")} />
 
       <main className="main-content" style={{ overflowY: "auto" }}>
         <div className="page-header">
@@ -72,7 +74,7 @@ export default function FilesPage() {
           >
             <FileText size={16} color="white" />
           </div>
-          <h1>Résumé de Document Médical</h1>
+          <h1>Medical Document Summary</h1>
           {file && (
             <button
               onClick={reset}
@@ -90,15 +92,15 @@ export default function FilesPage() {
                 cursor: "pointer",
               }}
             >
-              <RotateCcw size={12} /> Réinitialiser
+              <RotateCcw size={12} /> Reset
             </button>
           )}
         </div>
 
         <div className="tool-page">
           <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.6 }}>
-            Téléchargez vos résultats d&apos;analyse médicale, ordonnances ou comptes-rendus (PDF ou image).
-            Hemo vous fournira un résumé clair et des explications adaptées.
+            Upload your medical test results, prescriptions or reports (PDF or image). 
+            Hemo will provide a clear summary and adapted explanations.
           </p>
 
           {/* Hidden input */}
@@ -123,12 +125,12 @@ export default function FilesPage() {
             {file ? (
               <>
                 <div className="dz-title">{file.name}</div>
-                <div className="dz-subtitle">{formatSize(file.size)} · Cliquez pour changer</div>
+                <div className="dz-subtitle">{formatSize(file.size)} · Click to change</div>
               </>
             ) : (
               <>
-                <div className="dz-title">Cliquez pour choisir un document</div>
-                <div className="dz-subtitle">PDF, PNG, JPG — Résultats d&apos;analyses, ordonnances…</div>
+                <div className="dz-title">Click to choose a document</div>
+                <div className="dz-subtitle">PDF, PNG, JPG — Test results, prescriptions...</div>
               </>
             )}
           </div>
@@ -141,11 +143,11 @@ export default function FilesPage() {
           >
             {isProcessing ? (
               <>
-                <div className="spinner" /> Analyse en cours...
+                <div className="spinner" /> Analyzing...
               </>
             ) : (
               <>
-                <Upload size={18} /> Générer un résumé avec Hemo
+                <Upload size={18} /> Generate a summary with Hemo
               </>
             )}
           </button>
@@ -155,7 +157,7 @@ export default function FilesPage() {
             <div className="result-card">
               <div className="result-header">
                 <span>🩸</span>
-                <span>Résumé de Hemo</span>
+                <span>Hemo Summary</span>
               </div>
               <p>{summaryResult}</p>
             </div>

@@ -16,7 +16,7 @@ export default function AuthPage() {
     password: "",
   });
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,7 +35,7 @@ export default function AuthPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.detail || "Une erreur est survenue");
+        throw new Error(data.detail || "An error occurred");
       }
 
       // Success - Save to localStorage (simple auth for now)
@@ -78,12 +78,12 @@ export default function AuthPage() {
         </div>
 
         <h1 style={{ fontSize: '1.5rem', marginBottom: '8px', color: 'var(--text-primary)' }}>
-          {isLogin ? "Bon retour !" : "Créer un compte"}
+          {isLogin ? "Welcome back!" : "Create an account"}
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '32px', textAlign: 'center' }}>
           {isLogin 
-            ? "Connectez-vous pour retrouver Hemo." 
-            : "Rejoignez Hemo pour un suivi santé personnalisé."}
+            ? "Log in to reconnect with Hemo." 
+            : "Join Hemo for personalized health tracking."}
         </p>
 
         {error && (
@@ -130,7 +130,7 @@ export default function AuthPage() {
               <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 type="text"
-                placeholder="Nom d'utilisateur"
+                placeholder="Username"
                 required
                 value={formData.username}
                 onChange={(e) => setFormData({...formData, username: e.target.value})}
@@ -151,7 +151,7 @@ export default function AuthPage() {
               <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
               <input
                 type="password"
-                placeholder="Mot de passe"
+                placeholder="Password"
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -187,7 +187,7 @@ export default function AuthPage() {
           >
             {isLoading ? <Loader2 size={20} className="spinner" /> : (
               <>
-                {isLogin ? "Se connecter" : "S'inscrire"}
+                {isLogin ? "Login" : "Sign Up"}
                 <ArrowRight size={18} />
               </>
             )}
@@ -205,7 +205,7 @@ export default function AuthPage() {
             cursor: 'pointer'
           }}
         >
-          {isLogin ? "Pas encore de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
+          {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
         </button>
       </div>
     </div>

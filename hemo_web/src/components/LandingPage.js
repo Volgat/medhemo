@@ -1,8 +1,8 @@
 "use client";
 
+import React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, MessageCircle, Shield, Activity, Zap } from "lucide-react";
-import DrHemoAvatar from "@/components/DrHemoAvatar";
+import { ChevronRight, MessageCircle, X } from "lucide-react";
 
 export default function LandingPage({ onLogin, onSignup, onClose }) {
   return (
@@ -10,179 +10,240 @@ export default function LandingPage({ onLogin, onSignup, onClose }) {
       flex: 1,
       height: '100vh',
       overflowY: 'auto',
-      background: 'var(--main-bg)',
-      color: 'var(--text-primary)',
-      display: 'flex',
-      flexDirection: 'column'
+      background: 'white',
+      color: '#1a1a1a',
+      fontFamily: '"Inter", sans-serif',
+      position: 'relative'
     }}>
+      {/* Header */}
+      <header style={{
+        padding: '20px 80px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        background: 'rgba(255,255,255,0.8)',
+        backdropFilter: 'blur(10px)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ 
+            width: 32, height: 32, 
+            background: 'linear-gradient(135deg, #8b0000 0%, #1a1a1a 100%)',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+             <span style={{ color: 'white', fontWeight: 'bold' }}>H</span>
+          </div>
+          <span style={{ fontSize: '1.4rem', fontWeight: 700, letterSpacing: '-0.02em', color: '#1a1a1a' }}>MedHemo</span>
+        </div>
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <button 
+            onClick={onSignup}
+            style={{
+              padding: '10px 24px',
+              borderRadius: '8px',
+              background: '#a52a2a',
+              color: 'white',
+              border: 'none',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Signup
+          </button>
+          <button 
+            onClick={onLogin}
+            style={{
+              padding: '10px 24px',
+              borderRadius: '8px',
+              background: 'white',
+              color: '#1a1a1a',
+              border: '1px solid #d1d1d1',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            Login
+          </button>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section style={{
-        padding: '80px 24px',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '0 40px',
+        textAlign: 'center',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        textAlign: 'center',
-        background: 'linear-gradient(to bottom, var(--accent-muted) 0%, transparent 100%)'
+        justifyContent: 'center',
+        minHeight: '80vh'
       }}>
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          style={{ marginBottom: '32px' }}
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            fontSize: '3.5rem',
+            fontWeight: 800,
+            lineHeight: 1.1,
+            marginBottom: '16px',
+            color: '#111'
+          }}
         >
-          <DrHemoAvatar size={120} state="idle" />
-        </motion.div>
-
-        <motion.h1
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '16px', letterSpacing: '-1px' }}
-        >
-          Hemo <span style={{ color: 'var(--accent)' }}>AI</span>
+          Explore the Future of Personalized<br />
+          Health with MedHemo
         </motion.h1>
-
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', maxWidth: '600px', marginBottom: '40px', lineHeight: 1.6 }}
+        
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          style={{
+            fontSize: '1.25rem',
+            color: '#666',
+            marginBottom: '40px',
+            maxWidth: '800px'
+          }}
         >
-          Votre assistant médical intelligent spécialisé. Analyse d'images, conseils santé et suivi personnalisé en un seul endroit.
+          Access powerful general health models for comprehensive personal insights
         </motion.p>
 
+        {/* Hero Image */}
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}
+           initial={{ opacity: 0, scale: 0.95 }}
+           animate={{ opacity: 1, scale: 1 }}
+           transition={{ delay: 0.2 }}
+           style={{
+             width: '100%',
+             maxWidth: '900px',
+             borderRadius: '24px',
+             overflow: 'hidden',
+             marginBottom: '60px',
+             boxShadow: '0 30px 60px rgba(0,0,0,0.1)'
+           }}
         >
-          {onClose ? (
-            <button
-              onClick={onClose}
-              style={{
-                padding: '16px 32px',
-                borderRadius: '30px',
-                background: 'var(--accent)',
-                color: 'white',
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              Continuer vers le chat <ArrowRight size={20} />
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={onSignup}
-                style={{
-                  padding: '16px 32px',
-                  borderRadius: '30px',
-                  background: 'var(--accent)',
-                  color: 'white',
-                  fontSize: '1.1rem',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                Commencer maintenant <ArrowRight size={20} />
-              </button>
-              <button
-                onClick={onLogin}
-                style={{
-                  padding: '16px 32px',
-                  borderRadius: '30px',
-                  border: '1px solid var(--border)',
-                  background: 'var(--sidebar-bg)',
-                  color: 'var(--text-primary)',
-                  fontSize: '1.1rem',
-                  fontWeight: 600
-                }}
-              >
-                Se connecter
-              </button>
-            </>
-          )}
+          <img 
+            src="/hero.png" 
+            alt="MedHemo Lab Illustration" 
+            style={{ width: '100%', height: 'auto', display: 'block' }}
+          />
+        </motion.div>
+
+        {/* CTA Area */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}
+        >
+          <button
+            onClick={onSignup}
+            style={{
+              padding: '16px 40px',
+              borderRadius: '12px',
+              background: '#a52a2a',
+              color: 'white',
+              fontSize: '1.2rem',
+              fontWeight: 700,
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 10px 20px rgba(165, 42, 42, 0.2)'
+            }}
+          >
+            Get started with MedHemo
+          </button>
+          
+          <div style={{ color: '#888', fontSize: '0.95rem' }}>
+            Sign Up to Unlock General Health Insights
+          </div>
+          <div style={{ color: '#1a1a1a', fontSize: '1rem' }}>
+            Have an Account? <span onClick={onLogin} style={{ fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Login Here</span>
+          </div>
         </motion.div>
       </section>
 
-      {/* Features Grid */}
-      <section style={{ padding: '80px 24px', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+      {/* Floating Chat Bubble Widget */}
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 1, type: 'spring' }}
+        style={{
+          position: 'fixed',
+          bottom: '40px',
+          right: '40px',
+          zIndex: 100,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: '12px'
+        }}
+      >
+        {/* Floating Tooltip */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '32px'
+          background: 'white',
+          padding: '20px',
+          borderRadius: '16px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+          border: '1px solid #eee',
+          width: '320px',
+          position: 'relative'
         }}>
-          <FeatureCard 
-            icon={<MessageCircle style={{ color: 'var(--accent)' }} />}
-            title="Chat Intelligent"
-            desc="Discutez avec Hemo pour des conseils santé immédiats basés sur les dernières données médicales."
-          />
-          <FeatureCard 
-            icon={<Activity style={{ color: '#eb4899' }} />}
-            title="Analyse Multimodale"
-            desc="Envoyez des photos de vos analyses ou symptômes pour une description visuelle précise."
-          />
-          <FeatureCard 
-            icon={<Shield style={{ color: '#3b82f6' }} />}
-            title="Sécurisé & Privé"
-            desc="Vos données de santé sont cryptées et traitées avec la plus grande confidentialité."
-          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '0.9rem' }}>
+               <div style={{ width: 24, height: 24, background: '#a52a2a', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                 <span style={{ color: 'white', fontSize: 12 }}>H</span>
+               </div>
+               MedHemo Assistant
+            </div>
+            <X size={16} color="#aaa" style={{ cursor: 'pointer' }} onClick={() => {}} />
+          </div>
+          <div style={{ 
+            background: '#f4f4f4', 
+            padding: '12px', 
+            borderRadius: '10px', 
+            color: '#666', 
+            fontSize: '0.9rem',
+            marginBottom: '10px'
+          }}>
+            How can I help you?
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#999', fontSize: '0.8rem' }}>
+            <MessageCircle size={14} />
+             Type your message...
+          </div>
         </div>
-      </section>
 
-      {/* Footer Presentation */}
-      <section style={{
-        padding: '60px 24px',
-        textAlign: 'center',
-        borderTop: '1px solid var(--border)',
-        marginTop: 'auto'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '40px', marginBottom: '32px', opacity: 0.6 }}>
-          <Zap size={24} /> Orchestré par EARCP
-          <Activity size={24} /> Monitoring en temps réel
-          <Shield size={24} /> Conforme RGPD
+        {/* Main Circle Icon Trigger */}
+        <div 
+          onClick={onClose}
+          style={{
+            width: '64px',
+            height: '64px',
+            borderRadius: '32px',
+            background: '#a52a2a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 10px 20px rgba(165, 42, 42, 0.3)',
+            color: 'white'
+          }}
+        >
+          <MessageCircle size={32} />
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          &copy; 2026 Hemo AI. Tous droits réservés.
-        </p>
-      </section>
-    </div>
-  );
-}
+      </motion.div>
 
-function FeatureCard({ icon, title, desc }) {
-  return (
-    <div style={{
-      padding: '32px',
-      borderRadius: '24px',
-      background: 'var(--sidebar-bg)',
-      border: '1px solid var(--border)',
-      transition: 'transform 0.2s ease',
-      cursor: 'default'
-    }}
-    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-5px)'}
-    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-    >
-      <div style={{
-        width: '50px',
-        height: '50px',
-        borderRadius: '12px',
-        background: 'var(--accent-muted)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: '20px'
-      }}>
-        {icon}
-      </div>
-      <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '12px' }}>{title}</h3>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.6 }}>{desc}</p>
+      <style jsx>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+      `}</style>
     </div>
   );
 }

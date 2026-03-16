@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Mic, Square } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 export default function VoicePage() {
+  const router = useRouter();
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -50,7 +52,7 @@ export default function VoicePage() {
       setRecordingTime(0);
       timerRef.current = setInterval(() => setRecordingTime((p) => p + 1), 1000);
     } catch {
-      alert("Impossible d'accéder au microphone. Vérifiez les permissions du navigateur.");
+      alert("Unable to access microphone. Please check browser permissions.");
     }
   };
 
@@ -73,7 +75,7 @@ export default function VoicePage() {
       setTranscript(data.transcription);
       setAiResponse(data.ai_response);
     } catch {
-      setAiResponse("Erreur lors du traitement de l'audio. Vérifiez que le backend est démarré.");
+      setAiResponse("Error processing audio. Check if backend is started.");
     } finally {
       setIsProcessing(false);
     }
@@ -83,16 +85,16 @@ export default function VoicePage() {
     `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
   const statusText = isRecording
-    ? "Je vous écoute..."
+    ? "Listening..."
     : isProcessing
-    ? "Analyse en cours..."
+    ? "Analyzing..."
     : aiResponse
-    ? "Réponse de Hemo"
-    : "Appuyez sur le micro pour parler";
+    ? "Hemo Response"
+    : "Press the mic to speak";
 
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar onLogoClick={() => router.push("/")} />
 
       <main className="main-content">
         <div className="page-header">
@@ -167,7 +169,7 @@ export default function VoicePage() {
                     marginBottom: "6px",
                   }}
                 >
-                  Vous avez dit :
+                  You said:
                 </div>
                 <p className="transcript">&ldquo;{transcript}&rdquo;</p>
               </div>
@@ -183,7 +185,7 @@ export default function VoicePage() {
                       marginBottom: "6px",
                     }}
                   >
-                    Hemo répond :
+                    Réponse de Hemo :
                   </div>
                   <p className="ai-resp">{aiResponse}</p>
                 </div>

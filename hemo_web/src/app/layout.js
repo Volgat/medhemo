@@ -4,13 +4,13 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Hemo AI — Assistant Médical",
-  description: "Votre assistant IA spécialisé en drépanocytose",
+  title: "MedHemo Lab — Personalized Health Assistant",
+  description: "Your AI assistant specialized in personalized health insights",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         {children}
       </body>

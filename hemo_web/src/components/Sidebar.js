@@ -6,7 +6,7 @@ import {
   Thermometer, Wind, Settings2,
   MessageSquarePlus, Trash2,
   ChevronDown, ChevronRight,
-  Info
+  Info, LogOut, Sun, Moon
 } from "lucide-react";
 
 // ── Default config ────────────────────────────────────────────────────────────
@@ -18,6 +18,7 @@ export const DEFAULT_CONFIG = {
   streamMode:    false,
   systemLang:    "fr",
   expertMode:    false,
+  theme:         "dark",
 };
 
 // ── Groups for the Paramètres section ────────────────────────────────────────
@@ -117,13 +118,18 @@ function Toggle({ checked, onChange, label }) {
 }
 
 // ── Main Sidebar ──────────────────────────────────────────────────────────────
-export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, history = [], onClearHistory }) {
-  const set = (key, value) => onConfigChange?.({ ...config, [key]: value });
+export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, history = [], onClearHistory, onLogout, loggedUser }) {
+  const set = (key, value) => {
+    onConfigChange?.({ ...config, [key]: value });
+    if (key === "theme") {
+      document.documentElement.setAttribute("data-theme", value);
+    }
+  };
 
   return (
     <nav className="sidebar">
       {/* Logo */}
-      <div className="sidebar-logo">
+      <div className="sidebar-logo" onClick={onLogoClick} style={{ cursor: "pointer" }}>
         <div className="logo-icon" style={{ background: "linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%)" }}>
           <span style={{ color: "white", fontSize: "1rem" }}>🩺</span>
         </div>
@@ -217,6 +223,23 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
           <div style={{ marginTop: 8 }}>
             <Toggle label="Mode expert" checked={config.expertMode} onChange={v => set("expertMode", v)} />
           </div>
+          <div style={{ marginTop: 8 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0" }}>
+              <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>Thème</span>
+              <button
+                onClick={() => set("theme", config.theme === "dark" ? "light" : "dark")}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "4px 10px", borderRadius: 8,
+                  background: "var(--input-bg)", border: "1px solid var(--border)",
+                  color: "var(--text-primary)", fontSize: "0.75rem",
+                }}
+              >
+                {config.theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
+                {config.theme === "dark" ? "Clair" : "Sombre"}
+              </button>
+            </div>
+          </div>
           {config.expertMode && (
             <div style={{ marginTop: 6, padding: "6px 8px", background: "var(--accent-muted)", borderRadius: 6, display: "flex", gap: 6, alignItems: "flex-start" }}>
               <Info size={11} style={{ color: "var(--accent)", marginTop: 1, flexShrink: 0 }} />
@@ -230,9 +253,26 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
       </div>
 
       {/* Footer */}
-      <div className="sidebar-footer">
-        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", padding: "0 8px" }}>
-          Hemo AI v3.0 · EARCP + FastAPI · HuggingFace
+      <div className="sidebar-footer" style={{ padding: "12px 8px" }}>
+        {loggedUser && (
+          <button
+            onClick={onLogout}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              width: "100%", padding: "10px 12px", borderRadius: 8,
+              background: "rgba(239, 68, 68, 0.1)", color: "var(--danger)",
+              fontSize: "0.875rem", fontWeight: 600, marginBottom: 12,
+              transition: "background 0.2s",
+            }}
+            onMouseOver={e => e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)"}
+            onMouseOut={e => e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)"}
+          >
+            <LogOut size={16} />
+            <span>Déconnexion</span>
+          </button>
+        )}
+        <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", textAlign: "center" }}>
+          Hemo AI v3.0 · EARCP + FastAPI
         </div>
       </div>
     </nav>

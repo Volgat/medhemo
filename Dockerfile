@@ -1,4 +1,4 @@
-# Production Dockerfile for Hemo Backend
+# Production Dockerfile for Hemo Backend (Root-level)
 FROM python:3.10-slim
 
 # Set working directory
@@ -10,12 +10,12 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install
-COPY requirements.txt .
+# Copy requirements and install (from hemo_backend)
+COPY hemo_backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy application code (from hemo_backend)
+COPY hemo_backend/ .
 
 # Set environment variables (Defaults to port 8000)
 ENV PORT=8000

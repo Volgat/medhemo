@@ -32,16 +32,16 @@ export default function DrHemoAvatar({ size = 60, state = "idle", isSpeaking = f
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         >
           {/* Head Shape (White) */}
-          <rect x="25" y="25" width="50" height="40" rx="15" fill="white" />
+          <rect x="25" y="25" width="50" height="40" rx="15" fill="#ffffff" />
           
           {/* Antennas */}
           <motion.circle 
-            cx="35" cy="22" r="3" fill="white"
+            cx="35" cy="22" r="3" fill="#ffffff"
             animate={activeState === "listening" ? { fill: ["#ffffff", "#ff0000", "#ffffff"] } : {}}
             transition={{ duration: 1, repeat: Infinity }}
           />
           <motion.circle 
-            cx="65" cy="22" r="3" fill="white"
+            cx="65" cy="22" r="3" fill="#ffffff"
             animate={activeState === "listening" ? { fill: ["#ffffff", "#ff0000", "#ffffff"] } : {}}
             transition={{ duration: 1, repeat: Infinity }}
           />
@@ -70,7 +70,7 @@ export default function DrHemoAvatar({ size = 60, state = "idle", isSpeaking = f
           transition={{ duration: 0.8, repeat: Infinity }}
         >
           {/* White Drop Outline / Background */}
-          <path d="M50 85C50 85 35 70 35 60C35 51.7 41.7 45 50 45C58.3 45 65 51.7 65 60C65 70 50 85 50 85Z" fill="white" />
+          <path d="M50 85C50 85 35 70 35 60C35 51.7 41.7 45 50 45C58.3 45 65 51.7 65 60C65 70 50 85 50 85Z" fill="#ffffff" />
           
           {/* Green Internal Drop */}
           <path d="M50 82C50 82 38 70 38 62C38 55.4 43.4 50 50 50C56.6 50 62 55.4 62 62C62 70 50 82 50 82Z" fill="#4BBE4F" />
@@ -78,7 +78,7 @@ export default function DrHemoAvatar({ size = 60, state = "idle", isSpeaking = f
           {/* Heartbeat Line */}
           <motion.path
             d="M42 62H47L49 55L52 69L54 62H58"
-            stroke="white"
+            stroke="#ffffff"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"

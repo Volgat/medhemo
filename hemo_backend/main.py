@@ -25,7 +25,7 @@ logger = logging.getLogger("hemo")
 # ── Config ───────────────────────────────────────────────────────────────────
 HF_TOKEN       = os.getenv("HF_TOKEN", "")
 # Chat/LLM model — served via SambaNova inference provider (supports open LLMs)
-MEDGEMMA_MODEL = os.getenv("HF_MEDGEMMA_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
+MEDGEMMA_MODEL = os.getenv("HF_MEDGEMMA_MODEL", "google/medgemma-4b-it")
 WHISPER_MODEL  = os.getenv("HF_WHISPER_MODEL",  "openai/whisper-large-v3")
 LLAVA_MODEL    = os.getenv("HF_LLAVA_MODEL",     "llava-hf/llava-1.5-7b-hf")
 
@@ -40,9 +40,18 @@ HEADERS        = {"Authorization": f"Bearer {HF_TOKEN}"}
 # ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(title="Hemo AI Backend", version="3.0.0")
 
+# CORS: local dev + domaine de prod via variable d'env ALLOWED_ORIGINS
+# Ex. en prod: ALLOWED_ORIGINS=https://medhemo.com,https://app.medhemo.com
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+ALLOWED_ORIGINS = (
+    [o.strip() for o in _raw_origins.split(",") if o.strip()]
+    if _raw_origins
+    else ["http://localhost:3000", "http://127.0.0.1:3000"]
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -64,6 +73,11 @@ async def root():
         "version": "3.0.0",
         "api_docs": "/docs"
     }
+
+
+@app.get("/ping")
+async def ping():
+    return {"status": "healthy"}
 
 
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
@@ -134,12 +148,15 @@ async def call_medgemma(prompt: str, history: list[dict] | None = None) -> str:
     payload = {
         "model": MEDGEMMA_MODEL,
         "messages": messages,
-        "max_new_tokens": 700,
+        "max_tokens": 700,
         "temperature": 0.65,
     }
 
     url = HF_CHAT_URL
-    logger.info(f"→ MedGemma/Gemma-3: {prompt[:80]!r}")
+    logger.info(f"→ Chat Model: {MEDGEMMA_MODEL} | URL: {url}")
+    logger.info(f"→ Payload: {json.dumps(payload)}")
+    logger.info(f"→ Headers (masked): { {k: (v[:10] + '...') if k == 'Authorization' else v for k, v in HEADERS.items()} }")
+    
     async with httpx.AsyncClient(timeout=90.0) as client:
         resp = await client.post(url, json=payload, headers=HEADERS)
 
@@ -170,6 +187,7 @@ async def call_medgemma_stream(prompt: str, history: list[dict] | None = None):
     }
 
     url = HF_CHAT_URL
+
     full_text = ""
 
     async with httpx.AsyncClient(timeout=120.0) as client:

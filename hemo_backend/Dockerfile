@@ -17,12 +17,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Set environment variables (Placeholders for Hugging Face Secrets)
-ENV PORT=7860
+# Set environment variables (Defaults to port 8000)
+ENV PORT=8000
 ENV HOST=0.0.0.0
 
-# Expose the default HF Spaces port
-EXPOSE 7860
+# Expose the default port
+EXPOSE 8000
 
-# Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
+# Run the application using shell form to resolve environment variables
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]

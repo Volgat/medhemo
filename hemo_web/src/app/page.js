@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Send, Mic, MicOff, Paperclip, RotateCcw, X, Zap, MessageCircle, Heart
+  Send, Mic, MicOff, Paperclip, RotateCcw, X, Zap, MessageCircle, Heart,
+  PanelLeftClose, PanelLeftOpen, User
 } from "lucide-react";
 import Sidebar, { DEFAULT_CONFIG } from "@/components/Sidebar";
 import DrHemoAvatar from "@/components/DrHemoAvatar";
@@ -30,6 +31,7 @@ export default function UnifiedPage() {
   const [history, setHistory]       = useState([]);      // API history (role/content pairs)
   const [msgHistory, setMsgHistory] = useState([]);      // UI entries for sidebar
   const [loggedUser, setLoggedUser] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Sidebar config (temperature, max tokens, TTS lang, streaming, lang, expert mode)
   const [config, setConfig] = useState(DEFAULT_CONFIG);
@@ -43,8 +45,9 @@ export default function UnifiedPage() {
   const [recordSeconds, setRecordSeconds] = useState(0);
 
   // Conversation mode
-  const [convMode, setConvMode]   = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [convMode, setConvMode]       = useState(false);
+  const [isSpeaking, setIsSpeaking]   = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
 
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
@@ -92,7 +95,9 @@ export default function UnifiedPage() {
         audioRef.current.onended = () => {
           setIsSpeaking(false);
           URL.revokeObjectURL(url);
-          if (convLoopRef.current) setTimeout(() => startRecording(true), 600);
+          if (convLoopRef.current || isVoiceMode) {
+            setTimeout(() => startRecording(true), 600);
+          }
         };
         await audioRef.current.play();
       } else {
@@ -195,6 +200,8 @@ export default function UnifiedPage() {
     mediaRecRef.current?.stop();
     setIsRecording(false);
     setRecordSeconds(0);
+    // Explicitly do NOT close Voice Mode overlay here if it's meant to be continuous
+    // The user will close it via the "Fermer" button.
   }, []);
 
   // ── Conversation toggle ───────────────────────────────────────────────────────
@@ -225,11 +232,11 @@ export default function UnifiedPage() {
   const fmtTime = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
   const statusLabel = isLoading
-    ? "⟳ Processing..."
-    : isSpeaking  ? "🔊 Speaking..."
-    : convMode    ? (isRecording ? "⏺ Listening..." : "🗣️ Conversation")
-    : isRecording ? "⏺ Recording"
-    : "● Online";
+    ? "Processing..."
+    : isSpeaking  ? "Speaking..."
+    : convMode    ? (isRecording ? "Listening..." : "Conversation")
+    : isRecording ? "Recording"
+    : "Online";
 
   const statusColor = isLoading ? "var(--warning)"
     : isSpeaking             ? "#a78bfa"
@@ -240,6 +247,7 @@ export default function UnifiedPage() {
     <div className="app-shell">
       {loggedUser && (
         <Sidebar
+          isOpen={isSidebarOpen}
           config={config}
           onConfigChange={setConfig}
           history={msgHistory}
@@ -262,6 +270,16 @@ export default function UnifiedPage() {
           <>
             {/* ── Header ── */}
             <div className="page-header">
+              {loggedUser && (
+                <button 
+                  className="icon-action-btn" 
+                  onClick={() => setIsSidebarOpen(prev => !prev)} 
+                  title={isSidebarOpen ? "Masquer la barre" : "Afficher la barre"}
+                  style={{ marginRight: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {isSidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+                </button>
+              )}
               <div 
                 style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
                 onClick={() => setShowLanding(true)}
@@ -286,6 +304,46 @@ export default function UnifiedPage() {
               </div>
             </div>
 
+            {/* ── Voice Mode Overlay ── */}
+            {isVoiceMode && (
+              <div style={{
+                position: 'fixed', inset: 0, zIndex: 1000,
+                background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                textAlign: 'center', color: 'white'
+              }}>
+                <div style={{ marginBottom: 40, transform: 'scale(2)' }}>
+                  <DrHemoAvatar 
+                    size={100} 
+                    isSpeaking={isSpeaking} 
+                    state={isLoading ? "thinking" : isRecording ? "listening" : "idle"}
+                  />
+                </div>
+                <h2 style={{ fontSize: '1.5rem', marginBottom: 10 }}>
+                  {isRecording ? "Hemo vous écoute..." : isLoading ? "Hemo analyse..." : isSpeaking ? "Hemo répond..." : "Prêt à parler"}
+                </h2>
+                {isRecording && <div style={{ fontSize: '1.2rem', color: 'var(--danger)' }}>{fmtTime(recordSeconds)}</div>}
+                <div style={{ marginTop: 40, display: 'flex', gap: 20 }}>
+                  {isRecording ? (
+                    <button 
+                      onClick={stopRecording}
+                      style={{ padding: '15px 30px', borderRadius: 30, background: 'var(--danger)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Arrêter
+                    </button>
+                  ) : !isLoading && !isSpeaking && (
+                    <button 
+                      onClick={() => setIsVoiceMode(false)}
+                      style={{ padding: '15px 30px', borderRadius: 30, background: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Fermer
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+
             {/* ── Messages ── */}
             <div className="chat-messages">
               {messages.map((msg, i) => (
@@ -297,12 +355,16 @@ export default function UnifiedPage() {
                         isSpeaking={isSpeaking && i === messages.length - 1} 
                         state={isLoading && i === messages.length - 1 ? "thinking" : "idle"}
                       />
-                    ) : msg.isTranscription ? "🎙️" : "U"}
+                    ) : msg.isTranscription ? (
+                      <Mic size={14} />
+                    ) : (
+                      <User size={14} />
+                    )}
                   </div>
                   <div className="message-bubble">
                     {msg.role === "assistant" && <div className="message-name">Hemo</div>}
                     {msg.isTranscription && (
-                      <div className="message-name" style={{ color: "var(--warning)" }}>🎙️ Transcription Whisper</div>
+                      <div className="message-name" style={{ color: "var(--warning)" }}>Transcription Whisper</div>
                     )}
                     {msg.preview && (
                       <img src={msg.preview} alt="Uploaded" style={{ maxWidth: 200, borderRadius: 8, marginBottom: 6, display: "block" }} />
@@ -311,7 +373,7 @@ export default function UnifiedPage() {
                     {msg.visualDescription && config.expertMode && (
                       <details style={{ marginBottom: 6 }}>
                         <summary style={{ fontSize: "0.72rem", cursor: "pointer", color: "var(--text-muted)" }}>
-                          🔍 LLaVA Visual Description
+                          LLaVA Visual Description
                         </summary>
                         <p style={{ fontSize: "0.78rem", lineHeight: 1.6, marginTop: 4, color: "var(--text-secondary)" }}>
                           {msg.visualDescription}
@@ -366,7 +428,7 @@ export default function UnifiedPage() {
                   <span className="rec-dot" />
                   <span style={{ fontSize: "0.8rem", color: "var(--danger)" }}>{fmtTime(recordSeconds)}</span>
                   <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", flex: 1 }}>
-                    {convMode ? "Conversation — speak now..." : "Recording... click ⏹ to send"}
+                    {convMode ? "Conversation — speak now..." : "Recording... click Stop to send"}
                   </span>
                 </div>
               )}
@@ -392,31 +454,41 @@ export default function UnifiedPage() {
                   disabled={isLoading || convMode}
                 />
 
-                <button
-                  className={`input-icon-btn ${isRecording && !convMode ? "recording" : ""}`}
-                  title={isRecording && !convMode ? "Stop and send" : "Dictate a message"}
-                  onClick={() => isRecording && !convMode ? stopRecording() : startRecording(false)}
-                  disabled={isLoading || isSpeaking || convMode}
-                >
-                  {isRecording && !convMode ? <MicOff size={17} /> : <Mic size={17} />}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <button
+                    className={`input-icon-btn ${isRecording && !convMode ? "recording" : ""}`}
+                    title={isRecording && !convMode ? "Stop and send" : "Interaction Vocale"}
+                    onClick={() => {
+                      if (isRecording && !convMode) {
+                        stopRecording();
+                      } else {
+                        setIsVoiceMode(true);
+                        startRecording(false);
+                      }
+                    }}
+                    disabled={isLoading || isSpeaking || convMode}
+                  >
+                    {isRecording && !convMode ? <MicOff size={17} /> : <Mic size={17} />}
+                  </button>
 
-                <button
-                  className={`input-icon-btn ${convMode ? "conv-active" : ""}`}
-                  title={convMode ? "Stop conversation" : "Continuous conversation mode"}
-                  onClick={toggleConvMode}
-                  disabled={isLoading && !convMode}
-                >
-                  <MessageCircle size={17} />
-                </button>
+                  <button
+                    className={`input-icon-btn ${convMode ? "conv-active" : ""}`}
+                    title={convMode ? "Stop conversation" : "Continuous conversation mode"}
+                    onClick={toggleConvMode}
+                    disabled={isLoading && !convMode}
+                  >
+                    <MessageCircle size={17} />
+                  </button>
 
-                <button
-                  className="input-btn send"
-                  onClick={() => sendMultimodal()}
-                  disabled={(!input.trim() && !imageFile) || isLoading || convMode}
-                >
-                  {isLoading ? <div className="spinner" /> : <Send size={15} style={{ marginLeft: 1 }} />}
-                </button>
+                  <button
+                    className="input-btn send"
+                    onClick={() => sendMultimodal()}
+                    disabled={(!input.trim() && !imageFile) || isLoading || convMode}
+                  >
+                    {isLoading ? <div className="spinner" /> : <Send size={15} style={{ marginLeft: 1 }} />}
+                  </button>
+                </div>
+
               </div>
 
               <p className="input-hint">

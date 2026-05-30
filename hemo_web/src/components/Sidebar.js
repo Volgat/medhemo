@@ -113,7 +113,7 @@ function Toggle({ checked, onChange, label }) {
 }
 
 // ── Main Sidebar ──────────────────────────────────────────────────────────────
-export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, history = [], onClearHistory, onLogout, loggedUser, onLogoClick }) {
+export default function Sidebar({ isOpen = true, config = DEFAULT_CONFIG, onConfigChange, history = [], onClearHistory, onLogout, loggedUser, onLogoClick }) {
   const set = (key, value) => {
     onConfigChange?.({ ...config, [key]: value });
     if (key === "theme") {
@@ -122,7 +122,7 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
   };
 
   return (
-    <nav className="sidebar">
+    <nav className={`sidebar ${isOpen ? "" : "collapsed"}`}>
       {/* Logo */}
       <div className="sidebar-logo" onClick={onLogoClick} style={{ cursor: "pointer" }}>
         <div className="logo-icon" style={{ background: "linear-gradient(135deg, #a52a2a 0%, #1a1a1a 100%)" }}>
@@ -162,7 +162,7 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
             .map((m, i) => (
               <div key={i} className="sidebar-item" style={{ cursor: "default", flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
                 <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                  {m.isTranscription ? "🎙️ Audio" : m.preview ? "🖼️ Image" : "💬 Message"}
+                  {m.isTranscription ? "Audio" : m.preview ? "Image" : "Message"}
                 </span>
                 <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%" }}>
                   {m.content?.slice(0, 50)}{m.content?.length > 50 ? "…" : ""}
@@ -181,12 +181,12 @@ export default function Sidebar({ config = DEFAULT_CONFIG, onConfigChange, histo
             <>
               <Label>Voice Model</Label>
               <SelectInput value={config.voiceType} onChange={v => set("voiceType", v)} options={[
-                { value: "lila",    label: "👩 Lila (Naturelle)" },
-                { value: "ethan",   label: "👨 Ethan (Naturel)" },
-                { value: "female1", label: "👩 Douce (F)" },
-                { value: "male1",   label: "👨 Calme (M)" },
-                { value: "female2", label: "👩 Pro (F)" },
-                { value: "male2",   label: "👨 Pro (M)" },
+                { value: "lila",    label: "Lila (Naturelle)" },
+                { value: "ethan",   label: "Ethan (Naturel)" },
+                { value: "female1", label: "Douce (F)" },
+                { value: "male1",   label: "Calme (M)" },
+                { value: "female2", label: "Pro (F)" },
+                { value: "male2",   label: "Pro (M)" },
               ]} />
             </>
           )}

@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  hemo-backend:
+    build: .
+    container_name: hemo-backend-app
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - HF_TOKEN=${HF_TOKEN}
+      - HF_MEDGEMMA_MODEL=${HF_MEDGEMMA_MODEL:-google/gemma-3n-E4B-it}
+      - HF_WHISPER_MODEL=${HF_WHISPER_MODEL:-openai/whisper-large-v3}
+      - HF_LLAVA_MODEL=${HF_LLAVA_MODEL:-Qwen/Qwen2-VL-7B-Instruct}
+      - DB_PATH=/app/hemo_users.db
+    volumes:
+      - hemo_db_data:/app
+    restart: unless-stopped
+
+volumes:
+  hemo_db_data:

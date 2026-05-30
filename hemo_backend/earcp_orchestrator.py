@@ -15,6 +15,8 @@ giving Dr. Hemo the best possible multimodal response.
 
 from __future__ import annotations
 
+import os
+import io
 import logging
 import math
 import numpy as np
@@ -131,7 +133,64 @@ class HemoEnsemble:
             self._alpha   = 0.9
             self._w_min   = 0.05
 
+    # ── Multimodal Processing Logic ───────────────────────────────────────────
+
+    def process_audio(self, audio_path: str) -> dict:
+        """Transcribe audio using Whisper."""
+        try:
+            import httpx
+            with open(audio_path, "rb") as f:
+                data = f.read()
+            # Use environment variables if possible, otherwise hardcoded defaults
+            whisper_model = os.getenv("HF_WHISPER_MODEL", "openai/whisper-large-v3")
+            url = f"https://router.huggingface.co/hf-inference/models/{whisper_model}"
+            
+            hf_token = os.getenv("HF_TOKEN")
+            headers = {"Authorization": f"Bearer {hf_token}"} if hf_token else {}
+            
+            resp = httpx.post(url, content=data, headers={**headers, "Content-Type": "audio/webm"}, timeout=60)
+            if resp.status_code == 200:
+                return {"transcription": resp.json().get("text", "").strip()}
+            return {"transcription": None}
+        except Exception as e:
+            logger.error(f"Whisper exception: {e}")
+            return {"transcription": None}
+
+    def process_vision(self, image_b64: str, prompt: str) -> dict:
+        """Get visual description using Qwen-VL (Uniform Mode)."""
+        try:
+            import httpx
+            vision_model = os.getenv("HF_LLAVA_MODEL", "Qwen/Qwen2-VL-7B-Instruct")
+            url = "https://router.huggingface.co/v1/chat/completions"
+            
+            hf_token = os.getenv("HF_TOKEN")
+            headers = {"Authorization": f"Bearer {hf_token}"} if hf_token else {}
+            
+            payload = {
+                "model": vision_model,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt or "Describe this medical image."},
+                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_b64}"}}
+                        ]
+                    }
+                ],
+                "max_tokens": 500
+            }
+            resp = httpx.post(url, json=payload, headers=headers, timeout=60)
+            if resp.status_code == 200:
+                data = resp.json()
+                desc = data['choices'][0]['message']['content']
+                return {"visual_description": desc}
+            return {"visual_description": f"Analysis failed ({resp.status_code})."}
+        except Exception as e:
+            logger.error(f"Vision exception: {e}")
+            return {"visual_description": "Analysis failed."}
+
     # ── Public API ────────────────────────────────────────────────────────────
+
 
     def observe(self, signals: dict) -> dict[str, float]:
         """

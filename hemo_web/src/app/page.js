@@ -78,6 +78,7 @@ const DEFAULT_CONFIG = {
 };
 
 function formatMessage(text) {
+  if (!text || typeof text !== "string") return "";
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.*?)\*/g, "<em>$1</em>")
@@ -286,6 +287,7 @@ export default function UnifiedPage() {
       const res  = await fetch(`/api/hemo`, { method: "POST", body: form });
       if (!res.ok) throw new Error(`Backend ${res.status}`);
       const data = await res.json();
+      if (data && data.error) throw new Error(data.error);
 
       // Show transcription bubble for voice input
       if (data.transcription) {

@@ -44,7 +44,7 @@ class _FileUploadScreenState extends State<FileUploadScreen> {
       final result = await ApiService.analyzeFile(file: file);
       setState(() => _summary = result);
     } catch (e) {
-      setState(() => _summary = 'Erreur lors de l\'analyse: $e');
+      setState(() => _summary = 'Analysis error. Please try again.');
     } finally {
       setState(() => _isAnalyzing = false);
     }
@@ -77,7 +77,7 @@ class _FileUploadScreenState extends State<FileUploadScreen> {
                 const SizedBox(height: 8),
 
                 // ── Header ──────────────────────────────────────────
-                Text('Uploader des résultats',
+                Text('Upload Lab Results',
                     style: GoogleFonts.inter(
                         fontSize: 28, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 6),
@@ -116,7 +116,7 @@ class _FileUploadScreenState extends State<FileUploadScreen> {
                               color: AppTheme.primary, size: 36),
                         ),
                         const SizedBox(height: 14),
-                        Text('Appuyez ou glissez pour importer',
+                        Text('Tap or drag to upload',
                             style: GoogleFonts.inter(
                                 fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 4),
@@ -160,7 +160,7 @@ class _FileUploadScreenState extends State<FileUploadScreen> {
                       const Icon(Icons.folder_open_rounded,
                           color: AppTheme.primary, size: 22),
                       const SizedBox(width: 8),
-                      Text('Fichiers importés',
+                      Text('Uploaded Files',
                           style: GoogleFonts.inter(
                               fontSize: 17, fontWeight: FontWeight.bold)),
                     ],
@@ -315,7 +315,7 @@ class _FileUploadScreenState extends State<FileUploadScreen> {
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.query_stats_rounded),
                 label: Text(
-                  _isAnalyzing ? 'Analyse en cours...' : 'Analyser les fichiers',
+                  _isAnalyzing ? 'Analyzing...' : 'Analyze files',
                   style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold, fontSize: 16),
                 ),

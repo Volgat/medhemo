@@ -41,7 +41,8 @@ export default function AuthPage() {
       // Success - Save to localStorage (simple auth for now)
       localStorage.setItem("hemo_user", JSON.stringify({
         username: data.username,
-        token: data.token
+        token: data.token,
+        subscription_status: data.subscription_status || "inactive"
       }));
 
       router.push("/");

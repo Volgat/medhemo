@@ -22,13 +22,37 @@ enum MessageType { text, audio, image, file }
 class Language {
   final String code;
   final String label;
-  final String flag;
+  final String nativeLabel;
 
-  const Language({required this.code, required this.label, required this.flag});
+  const Language({
+    required this.code,
+    required this.label,
+    required this.nativeLabel,
+  });
 
   static const List<Language> supported = [
-    Language(code: 'fr',  label: 'Français', flag: '🇫🇷'),
-    Language(code: 'ewe', label: 'Ewe',      flag: '🇹🇬'),
-    Language(code: 'en',  label: 'English',  flag: '🇬🇧'),
+    Language(code: 'en',  label: 'English',  nativeLabel: 'English'),
+    Language(code: 'fr',  label: 'Français',  nativeLabel: 'Français'),
+    Language(code: 'ewe', label: 'Ewe',       nativeLabel: 'Ewe'),
   ];
+
+  static const Language defaultLanguage =
+      Language(code: 'fr', label: 'Français', nativeLabel: 'Français');
+}
+
+/// Représente une session de consultation passée dans l'historique.
+class ConversationSession {
+  final String id;
+  final String title;
+  final DateTime date;
+  final Language language;
+  final List<ChatMessage> messages;
+
+  ConversationSession({
+    required this.id,
+    required this.title,
+    required this.date,
+    required this.language,
+    required this.messages,
+  });
 }

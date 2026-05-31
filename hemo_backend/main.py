@@ -6,7 +6,8 @@ import logging
 
 from dotenv import load_dotenv  # type: ignore
 import httpx  # type: ignore
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Depends  # type: ignore
+import stripe  # type: ignore
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Depends, Request  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore
 from fastapi.responses import StreamingResponse  # type: ignore
 from pydantic import BaseModel, EmailStr  # type: ignore
@@ -17,6 +18,14 @@ from earcp_orchestrator import get_ensemble
 
 
 load_dotenv()
+
+# ── Stripe Config ────────────────────────────────────────────────────────────
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+stripe.api_key = STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_PRICE_ID = os.getenv("STRIPE_PRICE_ID", "price_1T_placeholder")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
@@ -81,10 +90,17 @@ async def ping():
 
 
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
+class CheckoutRequest(BaseModel):
+    username: str
+
+class PortalRequest(BaseModel):
+    username: str
+
 class ChatRequest(BaseModel):
     message: str
     history: list[dict] = []
     voice_type: str = "lila"
+    username: str = ""
 
 class UserSignup(BaseModel):
     username: str
@@ -99,6 +115,7 @@ class AuthResponse(BaseModel):
     message: str
     username: str
     token: str = "demo-token" # Placeholder until JWT is fully setup
+    subscription_status: str = "inactive"
 
 class ChatResponse(BaseModel):
     response: str
@@ -395,19 +412,179 @@ async def signup(user_data: UserSignup, db: Session = Depends(get_db)):
     new_user = User(
         username=user_data.username,
         email=user_data.email,
-        hashed_password=hash_password(user_data.password)
+        hashed_password=hash_password(user_data.password),
+        subscription_status="inactive"
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return {"message": "Success", "username": new_user.username, "token": "signup-token"}
+    return {
+        "message": "Success",
+        "username": new_user.username,
+        "token": "signup-token",
+        "subscription_status": new_user.subscription_status or "inactive"
+    }
 
 @app.post("/api/auth/login", response_model=AuthResponse)
 async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == user_data.username).first()
     if not user or not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    return {"message": "Logged in", "username": user.username, "token": "login-token"}
+    return {
+        "message": "Logged in",
+        "username": user.username,
+        "token": "login-token",
+        "subscription_status": user.subscription_status or "inactive"
+    }
+
+@app.get("/api/auth/status")
+async def get_user_status(username: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "username": user.username,
+        "email": user.email,
+        "subscription_status": user.subscription_status or "inactive",
+    }
+
+@app.post("/api/billing/create-checkout-session")
+async def create_checkout_session(req: CheckoutRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == req.username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not STRIPE_SECRET_KEY:
+        logger.error("STRIPE_SECRET_KEY is not configured")
+        raise HTTPException(status_code=500, detail="Billing system configuration error")
+    
+    if not user.stripe_customer_id:
+        try:
+            customer = stripe.Customer.create(
+                email=user.email,
+                metadata={"username": user.username}
+            )
+            user.stripe_customer_id = customer.id
+            db.commit()
+        except Exception as e:
+            logger.error(f"Stripe Customer creation error: {e}")
+            raise HTTPException(status_code=500, detail="Failed to create Stripe customer")
+    
+    try:
+        session = stripe.checkout.Session.create(
+            customer=user.stripe_customer_id,
+            payment_method_types=["card"],
+            line_items=[
+                {
+                    "price": STRIPE_PRICE_ID,
+                    "quantity": 1,
+                }
+            ],
+            mode="subscription",
+            success_url=f"{FRONTEND_URL}/?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{FRONTEND_URL}/",
+            metadata={"username": user.username}
+        )
+        return {"url": session.url}
+    except Exception as e:
+        logger.error(f"Stripe Session creation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/billing/portal")
+async def create_portal_session(req: PortalRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == req.username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not user.stripe_customer_id:
+        raise HTTPException(status_code=400, detail="No active billing profile found for this user")
+        
+    try:
+        session = stripe.billing_portal.Session.create(
+            customer=user.stripe_customer_id,
+            return_url=FRONTEND_URL
+        )
+        return {"url": session.url}
+    except Exception as e:
+        logger.error(f"Stripe Portal Session creation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/billing/webhook")
+async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    
+    if not STRIPE_WEBHOOK_SECRET:
+        logger.error("STRIPE_WEBHOOK_SECRET is not configured")
+        # During local testing, we might want a fallback if verifying is not possible, 
+        # but to be secure we should enforce it.
+        raise HTTPException(status_code=500, detail="Webhook verification secret not configured")
+        
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        logger.error("Invalid Stripe webhook payload")
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.error.SignatureVerificationError as e:
+        logger.error("Invalid Stripe signature verification")
+        raise HTTPException(status_code=400, detail="Invalid signature")
+        
+    event_type = event["type"]
+    logger.info(f"Received Stripe webhook event: {event_type}")
+    
+    data_object = event["data"]["object"]
+    
+    if event_type == "checkout.session.completed":
+        session = data_object
+        customer_id = session.get("customer")
+        subscription_id = session.get("subscription")
+        username = session.get("metadata", {}).get("username")
+        
+        user = None
+        if username:
+            user = db.query(User).filter(User.username == username).first()
+        if not user and customer_id:
+            user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
+            
+        if user:
+            user.stripe_customer_id = customer_id
+            user.stripe_subscription_id = subscription_id
+            user.subscription_status = "active"
+            db.commit()
+            logger.info(f"User {user.username} subscription activated via checkout session")
+        else:
+            logger.warning(f"No user found for customer_id: {customer_id} or username: {username}")
+            
+    elif event_type in ["customer.subscription.updated", "customer.subscription.deleted"]:
+        subscription = data_object
+        customer_id = subscription.get("customer")
+        status = subscription.get("status")
+        subscription_id = subscription.get("id")
+        
+        user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
+        if user:
+            user.stripe_subscription_id = subscription_id
+            if status in ["active", "trialing"]:
+                user.subscription_status = "active"
+            else:
+                user.subscription_status = "inactive"
+            db.commit()
+            logger.info(f"User {user.username} subscription status updated to: {status}")
+        else:
+            logger.warning(f"No user found for customer_id: {customer_id}")
+            
+    elif event_type == "invoice.payment_failed":
+        invoice = data_object
+        customer_id = invoice.get("customer")
+        user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
+        if user:
+            user.subscription_status = "inactive"
+            db.commit()
+            logger.info(f"User {user.username} subscription set to inactive (invoice.payment_failed)")
+            
+    return {"status": "success"}
 
 @app.get("/api/health")
 async def health():
@@ -425,17 +602,27 @@ async def health():
     }
 
 
+def check_premium_access(username: str, db: Session) -> None:
+    if not username:
+        raise HTTPException(status_code=403, detail="Authentication required")
+    user = db.query(User).filter(User.username == username).first()
+    if not user or user.subscription_status != "active":
+        raise HTTPException(status_code=403, detail="Premium subscription required")
+
+
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, db: Session = Depends(get_db)):
     """Standard text chat with conversation history."""
+    check_premium_access(req.username, db)
     logger.info(f"Chat: {req.message[:80]!r}")
     response = await call_medgemma(req.message, req.history)
     return {"response": response}
 
 
 @app.get("/api/chat/stream")
-async def chat_stream(message: str, history_json: str = "[]"):
+async def chat_stream(message: str, history_json: str = "[]", username: str = "", db: Session = Depends(get_db)):
     """SSE streaming endpoint."""
+    check_premium_access(username, db)
     try:
         history = json.loads(history_json)
     except Exception:
@@ -457,8 +644,11 @@ async def chat_stream(message: str, history_json: str = "[]"):
 async def audio_query(
     file: UploadFile = File(...),
     history_json: str = Form(default="[]"),
+    username: str = Form(default=""),
+    db: Session = Depends(get_db),
 ):
     """Voice input: audio → Whisper → MedGemma → response."""
+    check_premium_access(username, db)
     logger.info(f"Audio: {file.filename}")
     audio_bytes = await file.read()
 
@@ -490,8 +680,11 @@ async def vision_query(
     file: UploadFile = File(...),
     prompt: str = Form(default="Analyze this medical image."),
     history_json: str = Form(default="[]"),
+    username: str = Form(default=""),
+    db: Session = Depends(get_db),
 ):
     """Multimodal image analysis: LLaVA + MedGemma."""
+    check_premium_access(username, db)
     logger.info(f"Vision: {file.filename}, prompt={prompt[:60]!r}")
     image_bytes = await file.read()
 
@@ -545,6 +738,8 @@ async def multimodal_unified(
     voice_type: str = Form(default="lila"),
     image: UploadFile | None = File(default=None),
     audio: UploadFile | None = File(default=None),
+    username: str = Form(default=""),
+    db: Session = Depends(get_db),
 ):
     """
     ★ Unified multimodal endpoint orchestrated by EARCP ★
@@ -566,6 +761,7 @@ async def multimodal_unified(
       - history: updated conversation history
       - audio_b64: (optional) TTS audio if tts=true
     """
+    check_premium_access(username, db)
     try:
         history: list[dict] = json.loads(history_json)
     except Exception:
@@ -581,8 +777,22 @@ async def multimodal_unified(
     image_b64: str | None = None
     if image is not None:
         logger.info("Multimodal: Image input detected")
-        image_bytes = await image.read()
-        image_b64 = base64.b64encode(image_bytes).decode()
+        try:
+            image_bytes = await image.read()
+            img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            max_side = 768
+            w, h = img.size
+            if max(w, h) > max_side:
+                scale = max_side / max(w, h)
+                img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+            
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=80)
+            image_b64 = base64.b64encode(buf.getvalue()).decode()
+            logger.info(f"Multimodal image processed & compressed. Base64 length: {len(image_b64)}")
+        except Exception as e:
+            logger.error(f"Error processing image in multimodal: {e}")
+            image_b64 = None
 
     # ── Execute the Unified Hemo Orchestration ──────────────────────────────
     logger.info("Executing Hemo multimodal orchestration...")
@@ -598,7 +808,7 @@ async def multimodal_unified(
         os.unlink(f.name)
 
     visual_description = None
-    if image is not None:
+    if image is not None and image_b64 is not None:
         vision_out = ensemble.process_vision(image_b64, text)
         visual_description = vision_out.get("visual_description")
 
@@ -648,8 +858,11 @@ async def multimodal_unified(
 async def analyze_file(
     file: UploadFile = File(...),
     prompt: str = Form(default=""),
+    username: str = Form(default=""),
+    db: Session = Depends(get_db),
 ):
     """Analyse a medical document (PDF/image)."""
+    check_premium_access(username, db)
     content_type = file.content_type or ""
     file_bytes = await file.read()
 

@@ -18,14 +18,16 @@ class HealthAdviceScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Résultat d\'analyse',
+        title: Text('Analysis Result',
             style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 8),
+
             // ── Hemo AI Banner ─────────────────────────────────────
             Container(
               padding: const EdgeInsets.all(16),
@@ -41,7 +43,8 @@ class HealthAdviceScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
-                        color: AppTheme.primary, shape: BoxShape.circle),
+                        color: AppTheme.primary,
+                        shape: BoxShape.circle),
                     child: const Icon(Icons.smart_toy_rounded,
                         color: Colors.white, size: 24),
                   ),
@@ -50,7 +53,7 @@ class HealthAdviceScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Hemo AI dit...',
+                        Text('Hemo AI says...',
                             style: GoogleFonts.inter(
                                 color: AppTheme.primary,
                                 fontWeight: FontWeight.bold,
@@ -75,204 +78,236 @@ class HealthAdviceScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // ── Risk Level ─────────────────────────────────────────
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Niveau de risque',
-                    style: GoogleFonts.inter(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text('Faible risque',
-                      style: GoogleFonts.inter(
-                          color: AppTheme.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: LinearProgressIndicator(
-                value: 0.2,
-                minHeight: 14,
-                backgroundColor: isDark
-                    ? Colors.white12
-                    : Colors.grey.shade200,
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(AppTheme.primary),
-              ),
-            ).animate().slideX(begin: -0.5, duration: 800.ms),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Sain',
-                    style: GoogleFonts.inter(
-                        color: AppTheme.primary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold)),
-                Text('Modéré',
-                    style: GoogleFonts.inter(
-                        color: AppTheme.textMuted, fontSize: 11)),
-                Text('À risque',
-                    style: GoogleFonts.inter(
-                        color: AppTheme.textMuted, fontSize: 11)),
-              ],
-            ),
-
-            const SizedBox(height: 28),
-
-            // ── Key Takeaways ──────────────────────────────────────
-            Text('Points essentiels',
+            Text('Health Risk Level',
                 style: GoogleFonts.inter(
-                    fontSize: 16, fontWeight: FontWeight.bold)),
+                    fontWeight: FontWeight.bold, fontSize: 16))
+                .animate()
+                .fadeIn(delay: 100.ms),
             const SizedBox(height: 12),
-            ..._keyTakeaways.asMap().entries.map((e) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle_rounded,
-                        color: AppTheme.primary, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(e.value,
-                          style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: isDark
-                                  ? Colors.white70
-                                  : const Color(0xFF374151))),
-                    ),
-                  ],
-                ),
-              )
-                  .animate()
-                  .fadeIn(delay: Duration(milliseconds: 100 * e.key))
-                  .slideX(begin: 0.05);
-            }),
+            _RiskBar(isDark: isDark)
+                .animate()
+                .fadeIn(delay: 150.ms),
 
             const SizedBox(height: 24),
 
-            // ── Map / Nearby support ───────────────────────────────
+            // ── Key Takeaways ──────────────────────────────────────
+            Text('Key Takeaways',
+                style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold, fontSize: 16))
+                .animate()
+                .fadeIn(delay: 200.ms),
+            const SizedBox(height: 10),
+            ...[
+              'Continue maintaining your current hydration levels',
+              'Keep up your balanced diet',
+              'Monitor your iron levels regularly',
+            ].asMap().entries.map((e) => _Takeaway(
+                  text: e.value,
+                  delay: 250 + e.key * 60,
+                  isDark: isDark,
+                )),
+
+            const SizedBox(height: 24),
+
+            // ── Nearby Support ─────────────────────────────────────
             Container(
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                color: isDark ? AppTheme.surfaceDark : Colors.white,
+                borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                    color: isDark ? Colors.white12 : Colors.grey.shade200),
+                    color: isDark
+                        ? Colors.white10
+                        : Colors.black.withOpacity(0.06)),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2))
+                ],
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withOpacity(0.05)
-                          : Colors.grey.shade50,
-                      borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Soutien proche',
-                            style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textMuted,
-                                letterSpacing: 0.8)),
-                        Text('3 lieux trouvés',
-                            style: GoogleFonts.inter(
-                                color: AppTheme.primary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500)),
-                      ],
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.location_on_rounded,
+                            color: AppTheme.primary, size: 20),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Nearby Support',
+                              style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15)),
+                          Text('3 locations found',
+                              style: GoogleFonts.inter(
+                                  color: AppTheme.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                    ],
                   ),
-                  Container(
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(16)),
-                    ),
-                    child: Center(
-                      child: Icon(Icons.map_rounded,
-                          size: 48,
-                          color: Colors.white.withOpacity(0.6)),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.local_hospital_rounded,
+                          size: 18),
+                      label: Text('Find nearby clinic',
+                          style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primary,
+                        side: const BorderSide(
+                            color: AppTheme.primary, width: 1.5),
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12),
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
+            ).animate().fadeIn(delay: 400.ms),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
+            // ── Ask another question ───────────────────────────────
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.location_on_rounded),
-                label: Text('Trouver une clinique proche',
+                onPressed: () => Navigator.push(context,
+                    MaterialPageRoute(
+                        builder: (_) => const ChatScreen())),
+                icon: const Icon(Icons.chat_rounded, size: 18),
+                label: Text('Ask another question',
                     style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold, fontSize: 15)),
+                        fontWeight: FontWeight.bold)),
               ),
-            ),
-
-            const SizedBox(height: 12),
-
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ChatScreen()),
-                ),
-                icon: const Icon(Icons.chat_rounded,
-                    color: AppTheme.primary),
-                label: Text('Poser une autre question',
-                    style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primary,
-                        fontSize: 15)),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: const BorderSide(
-                      color: AppTheme.primary, width: 1.5),
-                  shape: const StadiumBorder(),
-                ),
-              ),
-            ),
+            ).animate().fadeIn(delay: 450.ms),
 
             const SizedBox(height: 16),
 
-            Center(
+            // ── Disclaimer ────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: Colors.orange.withOpacity(0.2)),
+              ),
               child: Text(
-                'Avertissement : Ce conseil généré par l\'IA est à titre informatif uniquement\net ne remplace pas une consultation médicale professionnelle.',
-                textAlign: TextAlign.center,
+                'Disclaimer: This AI-generated advice is for informational purposes only and does not replace professional medical advice.',
                 style: GoogleFonts.inter(
-                    fontSize: 10,
-                    color: AppTheme.textMuted,
+                    fontSize: 11,
+                    color: Colors.orange.shade700,
                     height: 1.5),
               ),
-            ),
-            const SizedBox(height: 24),
+            ).animate().fadeIn(delay: 500.ms),
           ],
         ),
       ),
     );
   }
+}
 
-  static const _keyTakeaways = [
-    'Taux de glucose dans la plage optimale',
-    'La stabilité de l\'hémoglobine s\'est améliorée de 4%',
-    'Les marqueurs d\'hydratation suggèrent une excellente récupération',
-  ];
+class _RiskBar extends StatelessWidget {
+  final bool isDark;
+  const _RiskBar({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final levels = [
+      ('Low Risk', Colors.green),
+      ('Healthy', AppTheme.primary),
+      ('Moderate', Colors.orange),
+      ('At Risk', Colors.red),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+            color: isDark
+                ? Colors.white10
+                : Colors.black.withOpacity(0.06)),
+      ),
+      child: Row(
+        children: levels.asMap().entries.map((e) {
+          final isActive = e.key == 1; // "Sain"
+          return Expanded(
+            child: Container(
+              margin: EdgeInsets.only(
+                  right: e.key < levels.length - 1 ? 4 : 0),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? e.value.$2.withOpacity(0.2)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: isActive
+                    ? Border.all(color: e.value.$2, width: 1.5)
+                    : null,
+              ),
+              child: Text(
+                e.value.$1,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: isActive
+                        ? FontWeight.bold
+                        : FontWeight.w500,
+                    color: isActive
+                        ? e.value.$2
+                        : AppTheme.textMuted),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _Takeaway extends StatelessWidget {
+  final String text;
+  final int delay;
+  final bool isDark;
+  const _Takeaway(
+      {required this.text,
+      required this.delay,
+      required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle_rounded,
+              color: AppTheme.primary, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(text,
+                style: GoogleFonts.inter(
+                    fontSize: 14, height: 1.5)),
+          ),
+        ],
+      ).animate().fadeIn(delay: Duration(milliseconds: delay)),
+    );
+  }
 }

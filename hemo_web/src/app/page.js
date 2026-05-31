@@ -32,6 +32,28 @@ export default function UnifiedPage() {
   const [msgHistory, setMsgHistory] = useState([]);      // UI entries for sidebar
   const [loggedUser, setLoggedUser] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [billingLoading, setBillingLoading] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (!loggedUser) return;
+    setBillingLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/billing/create-checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loggedUser.username }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      alert("Erreur lors de la redirection vers la page de paiement Stripe.");
+    } finally {
+      setBillingLoading(false);
+    }
+  };
 
   // Sidebar config (temperature, max tokens, TTS lang, streaming, lang, expert mode)
   const [config, setConfig] = useState(DEFAULT_CONFIG);
@@ -63,9 +85,25 @@ export default function UnifiedPage() {
   }, [messages]);
 
   useEffect(() => {
+    const fetchStatus = async (user) => {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/status?username=${user.username}`);
+        if (res.ok) {
+          const data = await res.json();
+          const updated = { ...user, subscription_status: data.subscription_status };
+          localStorage.setItem("hemo_user", JSON.stringify(updated));
+          setLoggedUser(updated);
+        }
+      } catch (e) {
+        console.error("Error fetching user status:", e);
+      }
+    };
+
     const saved = localStorage.getItem("hemo_user");
     if (saved) {
-      setLoggedUser(JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      setLoggedUser(parsed);
+      fetchStatus(parsed);
       // Only auto-hide landing if not explicitly requested
       const params = new URLSearchParams(window.location.search);
       if (params.get('landing') !== 'true') {
@@ -130,6 +168,7 @@ export default function UnifiedPage() {
     if (audioBlob) form.append("audio", audioBlob, "voice.webm");
     const img = image ?? imageFile;
     if (img) form.append("image", img);
+    if (loggedUser) form.append("username", loggedUser.username);
 
     try {
       const res  = await fetch(`${API_BASE}/api/multimodal`, { method: "POST", body: form });
@@ -344,159 +383,268 @@ export default function UnifiedPage() {
             )}
 
 
-            {/* ── Messages ── */}
-            <div className="chat-messages">
-              {messages.map((msg, i) => (
-                <div key={i} className={`message-row ${msg.role === "assistant" ? "ai" : "user"}`}>
-                  <div className={`msg-avatar ${msg.role === "assistant" ? "ai-avatar" : "user-avatar"}`}>
-                    {msg.role === "assistant" ? (
-                      <DrHemoAvatar 
-                        size={24} 
-                        isSpeaking={isSpeaking && i === messages.length - 1} 
-                        state={isLoading && i === messages.length - 1 ? "thinking" : "idle"}
-                      />
-                    ) : msg.isTranscription ? (
-                      <Mic size={14} />
-                    ) : (
-                      <User size={14} />
-                    )}
-                  </div>
-                  <div className="message-bubble">
-                    {msg.role === "assistant" && <div className="message-name">Hemo</div>}
-                    {msg.isTranscription && (
-                      <div className="message-name" style={{ color: "var(--warning)" }}>Transcription Whisper</div>
-                    )}
-                    {msg.preview && (
-                      <img src={msg.preview} alt="Uploaded" style={{ maxWidth: 200, borderRadius: 8, marginBottom: 6, display: "block" }} />
-                    )}
-                    {/* Expert mode: LLaVA visual description */}
-                    {msg.visualDescription && config.expertMode && (
-                      <details style={{ marginBottom: 6 }}>
-                        <summary style={{ fontSize: "0.72rem", cursor: "pointer", color: "var(--text-muted)" }}>
-                          LLaVA Visual Description
-                        </summary>
-                        <p style={{ fontSize: "0.78rem", lineHeight: 1.6, marginTop: 4, color: "var(--text-secondary)" }}>
-                          {msg.visualDescription}
-                        </p>
-                      </details>
-                    )}
-                    {/* Expert mode: EARCP weights */}
-                    {msg.earcp && config.expertMode && (
-                      <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                        {Object.entries(msg.earcp).map(([k, v]) => (
-                          <span key={k} style={{ fontSize: "0.65rem", background: "var(--accent-muted)", color: "var(--accent)", padding: "1px 6px", borderRadius: 8 }}>
-                            {k.replace("Expert", "")} {Math.round(v * 100)}%
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }} />
-                  </div>
+            {/* ── Chat Content or Premium Wall ── */}
+            {loggedUser.subscription_status !== "active" ? (
+              <div style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "40px 20px",
+                maxWidth: "600px",
+                margin: "auto",
+                textAlign: "center",
+              }}>
+                <div style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 24,
+                  background: "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 24,
+                  boxShadow: "0 8px 24px rgba(139, 92, 246, 0.4)"
+                }}>
+                  <Zap size={32} color="white" />
                 </div>
-              ))}
+                <h2 style={{ fontSize: "2rem", fontWeight: 800, marginBottom: 12, background: "linear-gradient(135deg, #fff 0%, #a78bfa 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  Passez à Hemo Premium
+                </h2>
+                <p style={{ color: "var(--text-secondary)", fontSize: "1.05rem", lineHeight: 1.6, marginBottom: 32 }}>
+                  Débloquez toute la puissance de Hemo Lab. Obtenez des analyses médicales précises, des diagnostics assistés par l'IA et bien plus encore.
+                </p>
 
-              {isLoading && (
-                <div className="message-row ai">
-                  <div className="msg-avatar ai-avatar">
-                    <DrHemoAvatar size={24} state="thinking" />
-                  </div>
-                  <div className="message-bubble">
-                    <div className="message-name">Hemo</div>
-                    <div className="typing-indicator">
-                      <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+                <div style={{
+                  width: "100%",
+                  background: "var(--sidebar-bg)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 20,
+                  padding: 24,
+                  textAlign: "left",
+                  marginBottom: 32,
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.15)"
+                }}>
+                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, color: "var(--text-primary)" }}>
+                    Fonctionnalités Premium incluses :
+                  </h3>
+                  <ul style={{ display: "flex", flexDirection: "column", gap: 12, padding: 0, margin: 0, listStyle: "none" }}>
+                    <li style={{ display: "flex", gap: 10, fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                      <span style={{ color: "var(--accent)" }}>✓</span>
+                      <span><strong>Orchestrateur EARCP</strong> : Combinaison dynamique de modèles d'experts.</span>
+                    </li>
+                    <li style={{ display: "flex", gap: 10, fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                      <span style={{ color: "var(--accent)" }}>✓</span>
+                      <span><strong>Modèle Médical MedGemma</strong> : Réponses hautement spécialisées de précision.</span>
+                    </li>
+                    <li style={{ display: "flex", gap: 10, fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                      <span style={{ color: "var(--accent)" }}>✓</span>
+                      <span><strong>Vision par Ordinateur LLaVA</strong> : Analyse visuelle détaillée des images médicales.</span>
+                    </li>
+                    <li style={{ display: "flex", gap: 10, fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                      <span style={{ color: "var(--accent)" }}>✓</span>
+                      <span><strong>Synthèse & Transcription vocale</strong> : Mode conversationnel temps réel.</span>
+                    </li>
+                  </ul>
+                  <div style={{ marginTop: 24, borderTop: "1px solid var(--border)", paddingTop: 16, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                    <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Tarif unique</span>
+                    <div>
+                      <span style={{ fontSize: "1.8rem", fontWeight: 800, color: "white" }}>19.99 €</span>
+                      <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}> / mois</span>
                     </div>
                   </div>
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
 
-            {/* ── Input Bar ── */}
-            <div className="input-area">
-              {imageFile && (
-                <div className="attachment-preview">
-                  <img src={imagePreview} alt="attachment" />
-                  <span title={imageFile.name}>{imageFile.name}</span>
-                  <button onClick={() => { setImageFile(null); setImagePreview(null); }}>
-                    <X size={12} />
-                  </button>
-                </div>
-              )}
-
-              {isRecording && (
-                <div className="recording-bar">
-                  <span className="rec-dot" />
-                  <span style={{ fontSize: "0.8rem", color: "var(--danger)" }}>{fmtTime(recordSeconds)}</span>
-                  <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", flex: 1 }}>
-                    {convMode ? "Conversation — speak now..." : "Recording... click Stop to send"}
-                  </span>
-                </div>
-              )}
-
-              <div className="input-wrapper">
-                <button className="input-icon-btn" title="Attach an image" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-                  <Paperclip size={17} />
-                </button>
-                <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => pickImage(e.target.files[0])} />
-
-                <input
-                  ref={inputRef}
-                  className="chat-input"
-                  type="text"
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMultimodal()}
-                  onPaste={e => {
-                    const item = [...e.clipboardData.items].find(i => i.type.startsWith("image/"));
-                    if (item) { e.preventDefault(); pickImage(item.getAsFile()); }
+                <button
+                  onClick={handleSubscribe}
+                  disabled={billingLoading}
+                  style={{
+                    width: "100%",
+                    padding: "16px",
+                    borderRadius: 12,
+                    border: "none",
+                    background: "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
+                    color: "white",
+                    fontSize: "1rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    boxShadow: "0 6px 20px rgba(139, 92, 246, 0.4)",
+                    transition: "transform 0.15s, box-shadow 0.15s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8
                   }}
-                  placeholder={convMode ? "Conversation mode active..." : "Ask Hemo a question..."}
-                  disabled={isLoading || convMode}
-                />
+                  onMouseOver={e => {
+                    e.currentTarget.style.transform = "scale(1.02)";
+                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(139, 92, 246, 0.5)";
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(139, 92, 246, 0.4)";
+                  }}
+                >
+                  {billingLoading ? <div className="spinner" /> : "S'abonner maintenant 🌟"}
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* ── Messages ── */}
+                <div className="chat-messages">
+                  {messages.map((msg, i) => (
+                    <div key={i} className={`message-row ${msg.role === "assistant" ? "ai" : "user"}`}>
+                      <div className={`msg-avatar ${msg.role === "assistant" ? "ai-avatar" : "user-avatar"}`}>
+                        {msg.role === "assistant" ? (
+                          <DrHemoAvatar 
+                            size={24} 
+                            isSpeaking={isSpeaking && i === messages.length - 1} 
+                            state={isLoading && i === messages.length - 1 ? "thinking" : "idle"}
+                          />
+                        ) : msg.isTranscription ? (
+                          <Mic size={14} />
+                        ) : (
+                          <User size={14} />
+                        )}
+                      </div>
+                      <div className="message-bubble">
+                        {msg.role === "assistant" && <div className="message-name">Hemo</div>}
+                        {msg.isTranscription && (
+                          <div className="message-name" style={{ color: "var(--warning)" }}>Transcription Whisper</div>
+                        )}
+                        {msg.preview && (
+                          <img src={msg.preview} alt="Uploaded" style={{ maxWidth: 200, borderRadius: 8, marginBottom: 6, display: "block" }} />
+                        )}
+                        {/* Expert mode: LLaVA visual description */}
+                        {msg.visualDescription && config.expertMode && (
+                          <details style={{ marginBottom: 6 }}>
+                            <summary style={{ fontSize: "0.72rem", cursor: "pointer", color: "var(--text-muted)" }}>
+                              LLaVA Visual Description
+                            </summary>
+                            <p style={{ fontSize: "0.78rem", lineHeight: 1.6, marginTop: 4, color: "var(--text-secondary)" }}>
+                              {msg.visualDescription}
+                            </p>
+                          </details>
+                        )}
+                        {/* Expert mode: EARCP weights */}
+                        {msg.earcp && config.expertMode && (
+                          <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                            {Object.entries(msg.earcp).map(([k, v]) => (
+                              <span key={k} style={{ fontSize: "0.65rem", background: "var(--accent-muted)", color: "var(--accent)", padding: "1px 6px", borderRadius: 8 }}>
+                                {k.replace("Expert", "")} {Math.round(v * 100)}%
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }} />
+                      </div>
+                    </div>
+                  ))}
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <button
-                    className={`input-icon-btn ${isRecording && !convMode ? "recording" : ""}`}
-                    title={isRecording && !convMode ? "Stop and send" : "Interaction Vocale"}
-                    onClick={() => {
-                      if (isRecording && !convMode) {
-                        stopRecording();
-                      } else {
-                        setIsVoiceMode(true);
-                        startRecording(false);
-                      }
-                    }}
-                    disabled={isLoading || isSpeaking || convMode}
-                  >
-                    {isRecording && !convMode ? <MicOff size={17} /> : <Mic size={17} />}
-                  </button>
-
-                  <button
-                    className={`input-icon-btn ${convMode ? "conv-active" : ""}`}
-                    title={convMode ? "Stop conversation" : "Continuous conversation mode"}
-                    onClick={toggleConvMode}
-                    disabled={isLoading && !convMode}
-                  >
-                    <MessageCircle size={17} />
-                  </button>
-
-                  <button
-                    className="input-btn send"
-                    onClick={() => sendMultimodal()}
-                    disabled={(!input.trim() && !imageFile) || isLoading || convMode}
-                  >
-                    {isLoading ? <div className="spinner" /> : <Send size={15} style={{ marginLeft: 1 }} />}
-                  </button>
+                  {isLoading && (
+                    <div className="message-row ai">
+                      <div className="msg-avatar ai-avatar">
+                        <DrHemoAvatar size={24} state="thinking" />
+                      </div>
+                      <div className="message-bubble">
+                        <div className="message-name">Hemo</div>
+                        <div className="typing-indicator">
+                          <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
 
-              </div>
+                {/* ── Input Bar ── */}
+                <div className="input-area">
+                  {imageFile && (
+                    <div className="attachment-preview">
+                      <img src={imagePreview} alt="attachment" />
+                      <span title={imageFile.name}>{imageFile.name}</span>
+                      <button onClick={() => { setImageFile(null); setImagePreview(null); }}>
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
 
-              <p className="input-hint">
-                <Zap size={10} style={{ display: "inline", marginRight: 3, color: "var(--accent)" }} />
-                MedHemo AI · Personalized Health Insights · Paste an image directly
-                {loggedUser && <span style={{ cursor: 'pointer', color: 'var(--accent)', marginLeft: 8 }} onClick={() => setShowLanding(true)}>Back to Home</span>}
-              </p>
-            </div>
+                  {isRecording && (
+                    <div className="recording-bar">
+                      <span className="rec-dot" />
+                      <span style={{ fontSize: "0.8rem", color: "var(--danger)" }}>{fmtTime(recordSeconds)}</span>
+                      <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", flex: 1 }}>
+                        {convMode ? "Conversation — speak now..." : "Recording... click Stop to send"}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="input-wrapper">
+                    <button className="input-icon-btn" title="Attach an image" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                      <Paperclip size={17} />
+                    </button>
+                    <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => pickImage(e.target.files[0])} />
+
+                    <input
+                      ref={inputRef}
+                      className="chat-input"
+                      type="text"
+                      value={input}
+                      onChange={e => setInput(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMultimodal()}
+                      onPaste={e => {
+                        const item = [...e.clipboardData.items].find(i => i.type.startsWith("image/"));
+                        if (item) { e.preventDefault(); pickImage(item.getAsFile()); }
+                      }}
+                      placeholder={convMode ? "Conversation mode active..." : "Ask Hemo a question..."}
+                      disabled={isLoading || convMode}
+                    />
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <button
+                        className={`input-icon-btn ${isRecording && !convMode ? "recording" : ""}`}
+                        title={isRecording && !convMode ? "Stop and send" : "Interaction Vocale"}
+                        onClick={() => {
+                          if (isRecording && !convMode) {
+                            stopRecording();
+                          } else {
+                            setIsVoiceMode(true);
+                            startRecording(false);
+                          }
+                        }}
+                        disabled={isLoading || isSpeaking || convMode}
+                      >
+                        {isRecording && !convMode ? <MicOff size={17} /> : <Mic size={17} />}
+                      </button>
+
+                      <button
+                        className={`input-icon-btn ${convMode ? "conv-active" : ""}`}
+                        title={convMode ? "Stop conversation" : "Continuous conversation mode"}
+                        onClick={toggleConvMode}
+                        disabled={isLoading && !convMode}
+                      >
+                        <MessageCircle size={17} />
+                      </button>
+
+                      <button
+                        className="input-btn send"
+                        onClick={() => sendMultimodal()}
+                        disabled={(!input.trim() && !imageFile) || isLoading || convMode}
+                      >
+                        {isLoading ? <div className="spinner" /> : <Send size={15} style={{ marginLeft: 1 }} />}
+                      </button>
+                    </div>
+
+                  </div>
+
+                  <p className="input-hint">
+                    <Zap size={10} style={{ display: "inline", marginRight: 3, color: "var(--accent)" }} />
+                    MedHemo AI · Personalized Health Insights · Paste an image directly
+                    {loggedUser && <span style={{ cursor: 'pointer', color: 'var(--accent)', marginLeft: 8 }} onClick={() => setShowLanding(true)}>Back to Home</span>}
+                  </p>
+                </div>
+              </>
+            )}
           </>
         )}
       </main>

@@ -39,7 +39,7 @@ class _ImageAnalysisScreenState extends State<ImageAnalysisScreen> {
     try {
       final result = await ApiService.visionQuery(
         imageFile: _selectedImage!,
-        prompt: "Analyse cette image médicale en relation avec la santé globale. Réponds de manière concise.",
+        prompt: "Analyze this medical image and provide a clear, concise health assessment.",
       );
 
       if (mounted) {
@@ -52,7 +52,7 @@ class _ImageAnalysisScreenState extends State<ImageAnalysisScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur d\'analyse: $e')),
+        SnackBar(content: Text('Analysis error. Please try again.')),
       );
     } finally {
       setState(() => _isAnalyzing = false);
@@ -69,7 +69,7 @@ class _ImageAnalysisScreenState extends State<ImageAnalysisScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Analyse d\'image',
+        title: Text('Image Analysis',
             style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(icon: const Icon(Icons.help_outline_rounded), onPressed: () {})
@@ -136,7 +136,7 @@ class _ImageAnalysisScreenState extends State<ImageAnalysisScreen> {
                                   color:
                                       AppTheme.primary.withOpacity(0.5)),
                               const SizedBox(height: 12),
-                              Text('Appuyez pour prendre une photo',
+                              Text('Tap to take a photo',
                                   style: GoogleFonts.inter(
                                       color: AppTheme.textMuted,
                                       fontWeight: FontWeight.w500)),
@@ -252,7 +252,7 @@ class _ImageAnalysisScreenState extends State<ImageAnalysisScreen> {
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.biotech_rounded),
                 label: Text(
-                  _isAnalyzing ? 'Analyse en cours...' : 'Analyser l\'image',
+                  _isAnalyzing ? 'Analyzing...' : 'Analyze Image',
                   style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold, fontSize: 16),
                 ),

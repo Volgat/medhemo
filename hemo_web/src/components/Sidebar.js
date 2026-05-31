@@ -6,7 +6,7 @@ import {
   Thermometer, Wind, Settings2,
   MessageSquarePlus, Trash2,
   ChevronDown, ChevronRight,
-  Info, LogOut, Sun, Moon
+  Info, LogOut, Sun, Moon, Loader2
 } from "lucide-react";
 
 // ── Default config ────────────────────────────────────────────────────────────
@@ -114,6 +114,51 @@ function Toggle({ checked, onChange, label }) {
 
 // ── Main Sidebar ──────────────────────────────────────────────────────────────
 export default function Sidebar({ isOpen = true, config = DEFAULT_CONFIG, onConfigChange, history = [], onClearHistory, onLogout, loggedUser, onLogoClick }) {
+  const [billingLoading, setBillingLoading] = useState(false);
+  const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+
+  const handleSubscribe = async () => {
+    if (!loggedUser) return;
+    setBillingLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/billing/create-checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loggedUser.username }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      alert("Erreur lors de la redirection vers la page de paiement Stripe.");
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const handleManageBilling = async () => {
+    if (!loggedUser) return;
+    setBillingLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/billing/portal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loggedUser.username }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      alert("Erreur lors de la redirection vers le portail client Stripe.");
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
   const set = (key, value) => {
     onConfigChange?.({ ...config, [key]: value });
     if (key === "theme") {
@@ -245,6 +290,90 @@ export default function Sidebar({ isOpen = true, config = DEFAULT_CONFIG, onConf
 
       {/* Footer */}
       <div className="sidebar-footer" style={{ padding: "12px 8px" }}>
+        {loggedUser && (
+          <div style={{
+            background: "var(--input-bg)",
+            border: "1px solid var(--border)",
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 12,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Plan :</span>
+              {loggedUser.subscription_status === "active" ? (
+                <span className="premium-badge" style={{
+                  fontSize: "0.72rem",
+                  background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                  color: "#1e1b4b",
+                  padding: "2px 8px",
+                  borderRadius: 20,
+                  fontWeight: 800,
+                  boxShadow: "0 0 10px rgba(245, 158, 11, 0.5)",
+                }}>Premium 🌟</span>
+              ) : (
+                <span style={{
+                  fontSize: "0.72rem",
+                  background: "var(--border)",
+                  color: "var(--text-muted)",
+                  padding: "2px 8px",
+                  borderRadius: 20,
+                  fontWeight: 600
+                }}>Standard</span>
+              )}
+            </div>
+            {loggedUser.subscription_status === "active" ? (
+              <button
+                onClick={handleManageBilling}
+                disabled={billingLoading}
+                style={{
+                  width: "100%",
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  border: "1px solid var(--border)",
+                  background: "transparent",
+                  color: "var(--text-primary)",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6
+                }}
+              >
+                {billingLoading ? <Loader2 size={12} className="spinner" /> : "Gérer l'abonnement"}
+              </button>
+            ) : (
+              <button
+                onClick={handleSubscribe}
+                disabled={billingLoading}
+                className="subscribe-btn"
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  borderRadius: 8,
+                  border: "none",
+                  background: "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
+                  color: "white",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(139, 92, 246, 0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  transition: "transform 0.15s, box-shadow 0.15s"
+                }}
+              >
+                {billingLoading ? <Loader2 size={12} className="spinner" /> : "Devenir Premium 🌟"}
+              </button>
+            )}
+          </div>
+        )}
         {loggedUser && (
           <button
             onClick={onLogout}

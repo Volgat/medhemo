@@ -9,6 +9,8 @@ import 'chat_screen.dart';
 import 'voice_screen.dart';
 import 'image_analysis_screen.dart';
 import 'file_upload_screen.dart';
+import 'history_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,20 +26,20 @@ class _HomeScreenState extends State<HomeScreen> {
   static const List<_QuickAction> _quickActions = [
     _QuickAction(
       icon: Icons.chat_bubble_rounded,
-      title: 'Poser une question',
-      subtitle: 'Réponses IA instantanées',
+      title: 'Ask a health question',
+      subtitle: 'Get instant AI-backed answers',
       screen: 'chat',
     ),
     _QuickAction(
       icon: Icons.photo_camera_rounded,
-      title: 'Analyser une photo',
-      subtitle: 'Analyse visuelle & suivi',
+      title: 'Take a photo of a symptom',
+      subtitle: 'Visual analysis and tracking',
       screen: 'image',
     ),
     _QuickAction(
       icon: Icons.upload_file_rounded,
-      title: 'Uploader un fichier médical',
-      subtitle: 'PDF, résultats de labo, ordonnances',
+      title: 'Upload a medical file',
+      subtitle: 'PDFs, lab results, and reports',
       screen: 'file',
     ),
   ];
@@ -70,18 +72,15 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // ── Header ─────────────────────────────────────────────
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 children: [
-                  // Mascot avatar
                   const DrHemoAvatar(size: 44, isSpeaking: false),
                   const SizedBox(width: 10),
                   Text('Hemo',
                       style: GoogleFonts.inter(
                           fontSize: 22, fontWeight: FontWeight.bold)),
                   const Spacer(),
-                  // Backend status indicator
                   Container(
                     width: 10,
                     height: 10,
@@ -108,24 +107,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const SizedBox(height: 16),
 
-                  // ── Hero Mic Button ─────────────────────────────
+                  // ── Hero question ───────────────────────────────
                   Text(
-                    'Comment puis-je\nvous aider ?',
+                    'How can I help you today?',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
-                        fontSize: 28, fontWeight: FontWeight.bold),
+                        fontSize: 26, fontWeight: FontWeight.bold),
                   ).animate().fadeIn(),
 
                   const SizedBox(height: 28),
 
+                  // ── Mic button ──────────────────────────────────
                   Center(
                     child: GestureDetector(
                       onTap: () => Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const VoiceScreen())),
+                          MaterialPageRoute(
+                              builder: (_) => const VoiceScreen())),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // Pulsing ring
                           Container(
                             width: 148,
                             height: 148,
@@ -142,8 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   curve: Curves.easeInOut)
                               .then()
                               .scaleXY(begin: 1.15, end: 1, duration: 1200.ms),
-
-                          // Main mic button
                           Container(
                             width: 128,
                             height: 128,
@@ -167,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 12),
                   Text(
-                    'Appuyez pour parler à Hemo',
+                    'Tap to speak with Hemo',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                         fontSize: 13,
@@ -178,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 36),
 
                   // ── Quick Actions ───────────────────────────────
-                  Text('Actions rapides',
+                  Text('Quick Actions',
                       style: GoogleFonts.inter(
                           fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
@@ -250,12 +248,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Conversations récentes',
+                      Text('Recent Conversations',
                           style: GoogleFonts.inter(
                               fontSize: 18, fontWeight: FontWeight.bold)),
                       TextButton(
-                          onPressed: () {},
-                          child: Text('Tout voir',
+                          onPressed: () => Navigator.push(context,
+                              MaterialPageRoute(
+                                  builder: (_) => const HistoryScreen())),
+                          child: Text('View All',
                               style: GoogleFonts.inter(
                                   color: AppTheme.primary,
                                   fontWeight: FontWeight.bold))),
@@ -270,16 +270,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             ? AppTheme.surfaceDark.withOpacity(0.5)
                             : Colors.white.withOpacity(0.6),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.black.withOpacity(0.05)),
+                        border:
+                            Border.all(color: Colors.black.withOpacity(0.05)),
                       ),
                       child: Center(
-                        child: Text('Aucune conversation pour le moment',
+                        child: Text('No conversations yet',
                             style: GoogleFonts.inter(
                                 color: AppTheme.textMuted, fontSize: 13)),
                       ),
                     )
                   else
-                    ...appState.messages.where((m) => m.role == 'user').take(3).map(
+                    ...appState.messages
+                        .where((m) => m.role == 'user')
+                        .take(3)
+                        .map(
                           (m) => Container(
                             margin: const EdgeInsets.only(bottom: 8),
                             padding: const EdgeInsets.symmetric(
@@ -314,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // ── Bottom Bar (Input + Nav) ───────────────────────────────────
+      // ── Bottom Bar ────────────────────────────────────────────────
       bottomSheet: Container(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         decoration: BoxDecoration(
@@ -328,7 +332,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Text input
             Row(
               children: [
                 Expanded(
@@ -339,15 +342,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => ChatScreen(initialMessage: v)),
+                              builder: (_) =>
+                                  ChatScreen(initialMessage: v)),
                         );
                         _textController.clear();
                       }
                     },
-                    style:
-                        GoogleFonts.inter(fontSize: 14),
+                    style: GoogleFonts.inter(fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'Tapez un message...',
+                      hintText: 'Type a message...',
                       hintStyle: GoogleFonts.inter(
                           color: AppTheme.textMuted, fontSize: 14),
                       contentPadding: const EdgeInsets.symmetric(
@@ -375,7 +378,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         icon: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: const BoxDecoration(
-                              color: AppTheme.primary, shape: BoxShape.circle),
+                              color: AppTheme.primary,
+                              shape: BoxShape.circle),
                           child: const Icon(Icons.send_rounded,
                               color: Colors.white, size: 18),
                         ),
@@ -385,10 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 8),
-
-            // Nav bar
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -396,17 +397,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: _selectedIndex == 0
                         ? Icons.home_rounded
                         : Icons.home_outlined,
-                    label: 'Accueil',
+                    label: 'Home',
                     active: _selectedIndex == 0,
                     onTap: () => setState(() => _selectedIndex = 0)),
                 _NavItem(
                     icon: Icons.history_rounded,
-                    label: 'Historique',
+                    label: 'History',
                     active: _selectedIndex == 1,
-                    onTap: () => setState(() => _selectedIndex = 1)),
+                    onTap: () {
+                      setState(() => _selectedIndex = 1);
+                      Navigator.push(context,
+                          MaterialPageRoute(
+                              builder: (_) => const HistoryScreen()));
+                    }),
                 _NavItem(
                     icon: Icons.folder_shared_rounded,
-                    label: 'Fichiers',
+                    label: 'Files',
                     active: _selectedIndex == 2,
                     onTap: () {
                       setState(() => _selectedIndex = 2);
@@ -416,9 +422,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     }),
                 _NavItem(
                     icon: Icons.settings_outlined,
-                    label: 'Paramètres',
+                    label: 'Settings',
                     active: _selectedIndex == 3,
-                    onTap: () => setState(() => _selectedIndex = 3)),
+                    onTap: () {
+                      setState(() => _selectedIndex = 3);
+                      Navigator.push(context,
+                          MaterialPageRoute(
+                              builder: (_) => const SettingsScreen()));
+                    }),
               ],
             ),
           ],

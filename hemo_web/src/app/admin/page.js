@@ -214,6 +214,7 @@ const MODALITY_LABELS = { text:"TEXT", voice:"VOICE", image:"IMAGE", multimodal:
 // ── Main Dashboard Component ──────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [authed,    setAuthed]    = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
   const [password,  setPassword]  = useState("");
   const [authErr,   setAuthErr]   = useState("");
   const [data,      setData]      = useState(null);
@@ -251,6 +252,7 @@ export default function AdminDashboard() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthErr("");
+    setAuthLoading(true);
     try {
       const res  = await fetch(`/api/admin/metrics?token=${encodeURIComponent(password)}`);
       let json = {};
@@ -260,12 +262,14 @@ export default function AdminDashboard() {
         setData(json);
         setLastRefresh(new Date());
       } else if (res.status === 401) {
-        setAuthErr("Invalid admin credentials.");
+        setAuthErr("Mot de passe incorrect.");
       } else {
-        setAuthErr(json.error || `Server error (${res.status}). Ensure RunPod backend is running.`);
+        setAuthErr(json.error || `Erreur serveur (${res.status}). Le backend RunPod est hors-ligne.`);
       }
     } catch (err) {
-      setAuthErr("Unable to contact RunPod serverless backend. Ensure your endpoint has active funds.");
+      setAuthErr("Impossible de contacter le serveur backend. Le serveur RunPod est probablement arrêté (fonds insuffisants).");
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -280,7 +284,16 @@ export default function AdminDashboard() {
   if (!authed) {
     return (
       <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#09090b", fontFamily:"system-ui, sans-serif" }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');`}</style>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          .spin-loader {
+            animation: spin 0.8s linear infinite;
+          }
+        `}</style>
         <div style={{ width:"100%", maxWidth:400, background:"#09090b", border:"1px solid #27272a", borderRadius:8, padding:"40px 32px", boxShadow:"0 4px 30px rgba(0,0,0,0.4)" }}>
           <div style={{ marginBottom:28 }}>
             <div style={{ display:"inline-flex", padding:"8px", background:"#18181b", border:"1px solid #27272a", borderRadius:6, marginBottom:16 }}>
@@ -294,12 +307,13 @@ export default function AdminDashboard() {
               <label style={{ fontSize:12, fontWeight:500, color:"#a1a1aa" }}>Clé d'administration</label>
               <input
                 type="password"
-                placeholder="Entrez le mot de passe"
+                placeholder={authLoading ? "Vérification en cours..." : "Entrez le mot de passe"}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
+                disabled={authLoading}
                 style={{
-                  width:"100%", padding:"10px 12px", borderRadius:6, background:"#18181b",
-                  border:"1px solid #27272a", color:"#f4f4f5", fontSize:14, outline:"none",
+                  width:"100%", padding:"10px 12px", borderRadius:6, background: authLoading ? "#0d0d0e" : "#18181b",
+                  border:"1px solid #27272a", color: authLoading ? "#71717a" : "#f4f4f5", fontSize:14, outline:"none",
                   boxSizing:"border-box", transition:"border-color 0.15s"
                 }}
                 onFocus={e => e.target.style.borderColor = "#52525b"}
@@ -308,10 +322,34 @@ export default function AdminDashboard() {
               />
             </div>
             {authErr && <div style={{ color:"#f87171", fontSize:12, marginBottom:16 }}>{authErr}</div>}
-            <button type="submit" style={{ width:"100%", padding:"10px", borderRadius:6, background:"#f4f4f5", color:"#09090b", fontWeight:600, fontSize:14, border:"none", cursor:"pointer", transition:"opacity 0.15s" }}
-              onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
-              onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
-              Se connecter
+            <button 
+              type="submit" 
+              disabled={authLoading}
+              style={{ 
+                width:"100%", padding:"10px", borderRadius:6, 
+                background: authLoading ? "#27272a" : "#f4f4f5", 
+                color: authLoading ? "#71717a" : "#09090b", 
+                fontWeight:600, fontSize:14, border:"none", 
+                cursor: authLoading ? "not-allowed" : "pointer", 
+                transition:"all 0.15s",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8
+              }}
+              onMouseEnter={e => { if(!authLoading) e.currentTarget.style.opacity = "0.9"; }}
+              onMouseLeave={e => { if(!authLoading) e.currentTarget.style.opacity = "1"; }}>
+              {authLoading ? (
+                <>
+                  <svg className="spin-loader" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
+                    <path d="M12 2a10 10 0 0 1 10 10" />
+                  </svg>
+                  Connexion...
+                </>
+              ) : (
+                "Se connecter"
+              )}
             </button>
           </form>
         </div>

@@ -24,7 +24,10 @@ import tempfile
 import logging
 
 # ── Assure un chemin DB valide dans RunPod (/tmp est toujours disponible) ──
-os.environ.setdefault("DB_PATH", "/tmp/hemo_users.db")
+# DATABASE_URL prend la priorité (PostgreSQL Supabase en prod)
+# Si absent, utilise SQLite dans /tmp en dernier recours
+if not os.environ.get("DATABASE_URL"):
+    os.environ.setdefault("DB_PATH", "/tmp/hemo_users.db")
 
 # Ajoute le répertoire courant au path pour retrouver les modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -402,12 +405,18 @@ async def handle_metrics_overview(job_input: dict) -> dict:
     """
     Admin overview: aggregate metrics for the dashboard.
     Returns users, messages, countries, time-series data.
+    Compatible with both SQLite (dev) and PostgreSQL (prod/Supabase).
     """
     from datetime import timedelta
+    from sqlalchemy import text
 
     try:
         db  = _get_db_session()
         now = datetime.utcnow()
+
+        # ── Detect DB type ───────────────────────────────────────────────────
+        db_url = os.environ.get("DATABASE_URL", "sqlite")
+        is_postgres = "postgresql" in db_url or "postgres" in db_url
 
         # ── User counts ─────────────────────────────────────────────────────
         total_users     = db.query(func.count(User.id)).scalar() or 0
@@ -444,30 +453,48 @@ async def handle_metrics_overview(job_input: dict) -> dict:
         )
         countries = [{"country": row[0], "users": row[1]} for row in countries_raw]
 
-        # ── Daily signups (last 30 days) ─────────────────────────────────────
-        daily_signups_raw = (
-            db.query(
-                func.strftime("%Y-%m-%d", User.created_at).label("day"),
-                func.count(User.id).label("count"),
-            )
-            .filter(User.created_at >= month_ago)
-            .group_by(func.strftime("%Y-%m-%d", User.created_at))
-            .order_by(func.strftime("%Y-%m-%d", User.created_at))
-            .all()
-        )
+        # ── Daily signups (last 30 days) — DB-agnostic ───────────────────────
+        if is_postgres:
+            # PostgreSQL: use date_trunc
+            daily_signups_raw = db.execute(text("""
+                SELECT TO_CHAR(DATE_TRUNC('day', created_at), 'YYYY-MM-DD') AS day,
+                       COUNT(id) AS count
+                FROM users
+                WHERE created_at >= :month_ago
+                GROUP BY DATE_TRUNC('day', created_at)
+                ORDER BY DATE_TRUNC('day', created_at)
+            """), {"month_ago": month_ago}).fetchall()
+        else:
+            # SQLite
+            daily_signups_raw = db.execute(text("""
+                SELECT strftime('%Y-%m-%d', created_at) AS day,
+                       COUNT(id) AS count
+                FROM users
+                WHERE created_at >= :month_ago
+                GROUP BY strftime('%Y-%m-%d', created_at)
+                ORDER BY strftime('%Y-%m-%d', created_at)
+            """), {"month_ago": month_ago.isoformat()}).fetchall()
         daily_signups = [{"date": row[0], "count": row[1]} for row in daily_signups_raw]
 
-        # ── Daily messages (last 30 days) ────────────────────────────────────
-        daily_messages_raw = (
-            db.query(
-                func.strftime("%Y-%m-%d", MessageLog.created_at).label("day"),
-                func.count(MessageLog.id).label("count"),
-            )
-            .filter(MessageLog.created_at >= month_ago)
-            .group_by(func.strftime("%Y-%m-%d", MessageLog.created_at))
-            .order_by(func.strftime("%Y-%m-%d", MessageLog.created_at))
-            .all()
-        )
+        # ── Daily messages (last 30 days) — DB-agnostic ──────────────────────
+        if is_postgres:
+            daily_messages_raw = db.execute(text("""
+                SELECT TO_CHAR(DATE_TRUNC('day', created_at), 'YYYY-MM-DD') AS day,
+                       COUNT(id) AS count
+                FROM message_logs
+                WHERE created_at >= :month_ago
+                GROUP BY DATE_TRUNC('day', created_at)
+                ORDER BY DATE_TRUNC('day', created_at)
+            """), {"month_ago": month_ago}).fetchall()
+        else:
+            daily_messages_raw = db.execute(text("""
+                SELECT strftime('%Y-%m-%d', created_at) AS day,
+                       COUNT(id) AS count
+                FROM message_logs
+                WHERE created_at >= :month_ago
+                GROUP BY strftime('%Y-%m-%d', created_at)
+                ORDER BY strftime('%Y-%m-%d', created_at)
+            """), {"month_ago": month_ago.isoformat()}).fetchall()
         daily_messages = [{"date": row[0], "count": row[1]} for row in daily_messages_raw]
 
         # ── Recent users (last 20) ───────────────────────────────────────────

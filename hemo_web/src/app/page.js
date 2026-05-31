@@ -307,9 +307,12 @@ export default function UnifiedPage() {
 
       await playTTS(data.response);
     } catch (err) {
+      const isRunPodErr = err.message?.includes("RunPod") || err.message?.includes("504") || err.message?.includes("502");
       setMessages(p => [...p, {
         role: "assistant",
-        content: `⚠️ Erreur de connexion - ${err.message}. Vérifiez que le backend tourne sur le port 8000.`,
+        content: isRunPodErr
+          ? `⚠️ Le service IA est temporairement indisponible (démarrage en cours…). Réessayez dans quelques instants. Si le problème persiste, vérifiez le solde RunPod.`
+          : `⚠️ Erreur : ${err.message}`,
       }]);
     } finally {
       setIsLoading(false);

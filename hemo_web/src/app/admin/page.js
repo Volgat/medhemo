@@ -177,13 +177,17 @@ export default function AdminDashboard() {
     setErr("");
     try {
       const res  = await fetch(`/api/admin/metrics?token=${encodeURIComponent(usePwd)}`);
-      const json = await res.json();
-      if (!res.ok) { setErr(json.error || "Error fetching metrics"); return; }
+      let json = {};
+      try { json = await res.json(); } catch {}
+      if (!res.ok) {
+        setErr(json.error || `Erreur serveur (${res.status}). Assurez-vous que le backend RunPod est actif.`);
+        return;
+      }
       if (json.error) { setErr(json.error); return; }
       setData(json);
       setLastRefresh(new Date());
     } catch(e) {
-      setErr(e.message);
+      setErr("Impossible de contacter le serveur backend. Il est probablement hors-ligne.");
     } finally {
       setLoading(false);
     }
@@ -192,14 +196,21 @@ export default function AdminDashboard() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthErr("");
-    const res  = await fetch(`/api/admin/metrics?token=${encodeURIComponent(password)}`);
-    const json = await res.json();
-    if (res.ok && !json.error) {
-      setAuthed(true);
-      setData(json);
-      setLastRefresh(new Date());
-    } else {
-      setAuthErr("Mot de passe incorrect.");
+    try {
+      const res  = await fetch(`/api/admin/metrics?token=${encodeURIComponent(password)}`);
+      let json = {};
+      try { json = await res.json(); } catch {}
+      if (res.ok && !json.error) {
+        setAuthed(true);
+        setData(json);
+        setLastRefresh(new Date());
+      } else if (res.status === 401) {
+        setAuthErr("Mot de passe incorrect.");
+      } else {
+        setAuthErr(json.error || `Erreur serveur (${res.status}). Le backend RunPod est hors-ligne.`);
+      }
+    } catch (err) {
+      setAuthErr("Impossible de contacter le serveur backend. Le serveur RunPod est probablement arrêté (fonds insuffisants).");
     }
   };
 

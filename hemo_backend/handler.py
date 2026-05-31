@@ -42,8 +42,9 @@ from main import (
 )
 
 # Importe les helpers DB/auth
-from database import init_db, get_db, User, hash_password, verify_password
+from database import init_db, get_db, User, MessageLog, hash_password, verify_password
 from sqlalchemy.orm import Session
+from sqlalchemy import func, cast, Date
 import stripe
 
 logging.basicConfig(
@@ -355,22 +356,184 @@ async def handle_billing_portal(job_input: dict) -> dict:
         return {"detail": str(e)}
 
 
+# ───────────────────────────────────────────────────────────────────────────────
+#  Metrics tracking + Admin overview
+# ───────────────────────────────────────────────────────────────────────────────
+
+async def handle_track_message(job_input: dict) -> dict:
+    """
+    Track a message event: increment total_messages, update last_seen,
+    and append a row to message_logs for time-series analytics.
+    """
+    username = job_input.get("username", "")
+    modality = job_input.get("modality", "text")   # text | voice | image | multimodal
+    country  = job_input.get("country",  None)
+
+    try:
+        db   = _get_db_session()
+        now  = datetime.utcnow()
+
+        # Update user stats
+        if username:
+            user = db.query(User).filter(User.username == username).first()
+            if user:
+                user.last_seen      = now
+                user.total_messages = (user.total_messages or 0) + 1
+                if country and not user.country:
+                    user.country = country
+                db.commit()
+
+        # Always log the message event (even for anonymous users)
+        log = MessageLog(
+            username=username or "anonymous",
+            modality=modality,
+            country=country,
+            created_at=now,
+        )
+        db.add(log)
+        db.commit()
+        return {"tracked": True}
+    except Exception as e:
+        logger.error(f"track_message error: {e}")
+        return {"tracked": False, "error": str(e)}
+
+
+async def handle_metrics_overview(job_input: dict) -> dict:
+    """
+    Admin overview: aggregate metrics for the dashboard.
+    Returns users, messages, countries, time-series data.
+    """
+    from datetime import timedelta
+
+    try:
+        db  = _get_db_session()
+        now = datetime.utcnow()
+
+        # ── User counts ─────────────────────────────────────────────────────
+        total_users     = db.query(func.count(User.id)).scalar() or 0
+        active_subs     = db.query(func.count(User.id)).filter(User.subscription_status == "active").scalar() or 0
+        free_users      = total_users - active_subs
+
+        # Active last 7 days
+        week_ago        = now - timedelta(days=7)
+        active_7d       = db.query(func.count(User.id)).filter(User.last_seen >= week_ago).scalar() or 0
+        # New last 30 days
+        month_ago       = now - timedelta(days=30)
+        new_30d         = db.query(func.count(User.id)).filter(User.created_at >= month_ago).scalar() or 0
+
+        # ── Message counts ───────────────────────────────────────────────────
+        total_messages  = db.query(func.count(MessageLog.id)).scalar() or 0
+        messages_7d     = db.query(func.count(MessageLog.id)).filter(MessageLog.created_at >= week_ago).scalar() or 0
+
+        # ── Modality breakdown ───────────────────────────────────────────────
+        modalities_raw = (
+            db.query(MessageLog.modality, func.count(MessageLog.id))
+            .group_by(MessageLog.modality)
+            .all()
+        )
+        modalities = {row[0]: row[1] for row in modalities_raw}
+
+        # ── Country breakdown (top 10) ───────────────────────────────────────
+        countries_raw = (
+            db.query(User.country, func.count(User.id))
+            .filter(User.country != None)
+            .group_by(User.country)
+            .order_by(func.count(User.id).desc())
+            .limit(10)
+            .all()
+        )
+        countries = [{"country": row[0], "users": row[1]} for row in countries_raw]
+
+        # ── Daily signups (last 30 days) ─────────────────────────────────────
+        daily_signups_raw = (
+            db.query(
+                func.strftime("%Y-%m-%d", User.created_at).label("day"),
+                func.count(User.id).label("count"),
+            )
+            .filter(User.created_at >= month_ago)
+            .group_by(func.strftime("%Y-%m-%d", User.created_at))
+            .order_by(func.strftime("%Y-%m-%d", User.created_at))
+            .all()
+        )
+        daily_signups = [{"date": row[0], "count": row[1]} for row in daily_signups_raw]
+
+        # ── Daily messages (last 30 days) ────────────────────────────────────
+        daily_messages_raw = (
+            db.query(
+                func.strftime("%Y-%m-%d", MessageLog.created_at).label("day"),
+                func.count(MessageLog.id).label("count"),
+            )
+            .filter(MessageLog.created_at >= month_ago)
+            .group_by(func.strftime("%Y-%m-%d", MessageLog.created_at))
+            .order_by(func.strftime("%Y-%m-%d", MessageLog.created_at))
+            .all()
+        )
+        daily_messages = [{"date": row[0], "count": row[1]} for row in daily_messages_raw]
+
+        # ── Recent users (last 20) ───────────────────────────────────────────
+        recent_users_raw = (
+            db.query(User)
+            .order_by(User.created_at.desc())
+            .limit(20)
+            .all()
+        )
+        recent_users = [
+            {
+                "username":            u.username,
+                "email":               u.email,
+                "created_at":          u.created_at.isoformat() if u.created_at else None,
+                "last_seen":           u.last_seen.isoformat() if u.last_seen else None,
+                "subscription_status": u.subscription_status,
+                "total_messages":      u.total_messages or 0,
+                "country":             u.country or "",
+                "plan":                u.subscription_status,
+            }
+            for u in recent_users_raw
+        ]
+
+        return {
+            # KPI cards
+            "total_users":    total_users,
+            "active_subs":    active_subs,
+            "free_users":     free_users,
+            "active_7d":      active_7d,
+            "new_30d":        new_30d,
+            "total_messages": total_messages,
+            "messages_7d":    messages_7d,
+            # Charts data
+            "modalities":     modalities,
+            "countries":      countries,
+            "daily_signups":  daily_signups,
+            "daily_messages": daily_messages,
+            # Table
+            "recent_users":   recent_users,
+            "generated_at":   now.isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"metrics_overview error: {e}", exc_info=True)
+        return {"error": str(e)}
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  Main dispatcher — RunPod entrypoint
 # ─────────────────────────────────────────────────────────────────────────────
 
 ACTIONS = {
-    "multimodal":                     handle_multimodal,
-    "tts":                            handle_tts,
-    "chat":                           handle_chat,
-    "health":                         handle_health,
+    "multimodal":                      handle_multimodal,
+    "tts":                             handle_tts,
+    "chat":                            handle_chat,
+    "health":                          handle_health,
     # Auth
-    "auth_signup":                    handle_auth_signup,
-    "auth_login":                     handle_auth_login,
-    "auth_status":                    handle_auth_status,
+    "auth_signup":                     handle_auth_signup,
+    "auth_login":                      handle_auth_login,
+    "auth_status":                     handle_auth_status,
     # Billing
     "billing_create-checkout-session": handle_billing_checkout,
     "billing_portal":                  handle_billing_portal,
+    # Metrics
+    "track_message":                   handle_track_message,
+    "metrics_overview":                handle_metrics_overview,
 }
 
 

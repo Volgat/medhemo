@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -7,8 +7,6 @@ import os
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    # Use DB_PATH env var if set (recommended in prod), otherwise write to /tmp
-    # to avoid disk I/O errors on read-only or network-mounted filesystems.
     _db_path = os.getenv("DB_PATH", "/tmp/hemo_users.db")
     DATABASE_URL = f"sqlite:///{_db_path}"
 
@@ -23,14 +21,32 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    stripe_customer_id = Column(String, unique=True, index=True, nullable=True)
+    id                     = Column(Integer, primary_key=True, index=True)
+    username               = Column(String, unique=True, index=True)
+    email                  = Column(String, unique=True, index=True)
+    hashed_password        = Column(String)
+    created_at             = Column(DateTime, default=datetime.utcnow)
+    stripe_customer_id     = Column(String, unique=True, index=True, nullable=True)
     stripe_subscription_id = Column(String, nullable=True)
-    subscription_status = Column(String, default="inactive")
+    subscription_status    = Column(String, default="inactive")
+
+    # ── Metrics columns ──────────────────────────────────────────────────────
+    last_seen              = Column(DateTime, nullable=True)    # last activity timestamp
+    total_messages         = Column(Integer, default=0)         # cumulative messages sent
+    country                = Column(String, nullable=True)      # ISO 3166-1 alpha-2 (e.g. "FR")
+    plan                   = Column(String, default="free")     # "free" | "pro"
+
+
+class MessageLog(Base):
+    """One row per conversation turn — used for time-series charts."""
+    __tablename__ = "message_logs"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    username   = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    modality   = Column(String, default="text")  # "text" | "voice" | "image" | "multimodal"
+    country    = Column(String, nullable=True)
+
 
 def init_db():
     Base.metadata.create_all(bind=engine)

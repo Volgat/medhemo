@@ -250,7 +250,15 @@ async def _synthesize_tts(text: str, voice_type: str = "lila") -> bytes:
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def handle_health(_job_input: dict) -> dict:
-    return {"status": "ok", "service": "Hemo AI", "version": "3.1.0"}
+    try:
+        from database import engine
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            res = conn.execute(text("SELECT 1")).fetchall()
+            return {"status": "ok", "db_status": "connected", "result": str(res)}
+    except Exception as e:
+        import traceback
+        return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
 
 
 async def handle_chat(job_input: dict) -> dict:

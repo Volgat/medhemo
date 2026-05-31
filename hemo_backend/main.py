@@ -142,6 +142,10 @@ def make_system_prompt() -> str:
         "You are Hemo, a caring and versatile health assistant dedicated to providing "
         "personalized health insights and general wellness support. "
         "Your goal is to assist the user with their health questions and concerns in a natural, empathetic way. "
+        "CRITICAL IDENTITY RULES:\n"
+        "- Your name is strictly 'Hemo'. You are an assistant, NOT a doctor.\n"
+        "- You must NEVER refer to yourself as 'Dr. Hemo', 'Dr Hemo', 'Docteur Hemo', 'Doctor Hemo', or assume any medical doctor title.\n"
+        "- If introducing yourself, you must say only 'Hemo' (e.g. 'I am Hemo' / 'Je suis Hemo') and never use 'Dr.' or 'Doctor' or 'Docteur' as a prefix.\n\n"
         "Only introduce yourself when it is appropriate to do so (like at the start of a conversation "
         "or if the user asks who you are). Vary your greeting and introduction phrases to avoid being repetitive. "
         "ALWAYS detect the user's language based on their input and respond in that same language. "
@@ -350,10 +354,33 @@ async def synthesize_tts(text: str, voice_type: str = "lila") -> bytes:
     try:
         import edge_tts
         from langdetect import detect
+        import re
+
+        # Clean the text for TTS (remove markdown formatting, list bullets, etc.)
+        cleaned_text = text
+        if cleaned_text:
+            # 1. Remove markdown links: [label](url) -> label
+            cleaned_text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', cleaned_text)
+            
+            # 2. Remove markdown headers: #, ##, ###, etc. at the start of a line
+            cleaned_text = re.sub(r'(?m)^#+\s*', '', cleaned_text)
+            
+            # 3. Remove bold / italics markdown markers: **, *, __, _
+            cleaned_text = cleaned_text.replace('**', '').replace('__', '')
+            cleaned_text = cleaned_text.replace('*', '')
+            cleaned_text = cleaned_text.replace('_', ' ')
+            cleaned_text = cleaned_text.replace('`', '')
+            
+            # 4. Remove bullet points at the beginning of a line or after spaces
+            cleaned_text = re.sub(r'(?m)^[-+]\s+', '', cleaned_text)
+            cleaned_text = re.sub(r'\s+[-+]\s+', ' ', cleaned_text)
+            
+            # 5. Clean up extra whitespaces/newlines
+            cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
 
         # Robust language detection
         try:
-            lang = detect(text)
+            lang = detect(cleaned_text)
         except Exception:
             lang = "fr"
         
@@ -387,7 +414,7 @@ async def synthesize_tts(text: str, voice_type: str = "lila") -> bytes:
         voice_id = voices_for_lang.get(voice_type.lower(), voices_for_lang["lila"])
 
         # Create audio stream
-        communicate = edge_tts.Communicate(text[:1000], voice_id)
+        communicate = edge_tts.Communicate(cleaned_text[:1000], voice_id)
         audio_data = b""
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":

@@ -828,10 +828,14 @@ async def multimodal_unified(
         import tempfile
         with tempfile.NamedTemporaryFile(suffix=".webm", delete=False, mode='wb') as f:
             f.write(audio_bytes)
-            f.flush()
-            audio_out = ensemble.process_audio(f.name)
-            transcription = audio_out.get("transcription")
-        os.unlink(f.name)
+            f_name = f.name
+        # On Windows, we must close the file handle before another process/thread opens it.
+        audio_out = ensemble.process_audio(f_name)
+        transcription = audio_out.get("transcription")
+        try:
+            os.unlink(f_name)
+        except Exception as e:
+            logger.warning(f"Failed to unlink temp file {f_name}: {e}")
 
     visual_description = None
     if image is not None and image_b64 is not None:

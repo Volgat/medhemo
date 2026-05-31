@@ -307,12 +307,9 @@ export default function UnifiedPage() {
 
       await playTTS(data.response);
     } catch (err) {
-      const isRunPodErr = err.message?.includes("RunPod") || err.message?.includes("504") || err.message?.includes("502");
       setMessages(p => [...p, {
         role: "assistant",
-        content: isRunPodErr
-          ? `⚠️ Le service IA est temporairement indisponible (démarrage en cours…). Réessayez dans quelques instants. Si le problème persiste, vérifiez le solde RunPod.`
-          : `⚠️ Erreur : ${err.message}`,
+        content: `Je suis désolé, une erreur s'est produite. Veuillez réessayer dans quelques instants. Si le problème persiste, contactez le support.`,
       }]);
     } finally {
       setIsLoading(false);

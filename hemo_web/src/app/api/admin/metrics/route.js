@@ -10,7 +10,7 @@ const ADMIN_PASSWORD       = process.env.ADMIN_PASSWORD || "hemo-admin-2025";
 const SUPABASE_URL         = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RUNPOD_API_KEY       = process.env.RUNPOD_API_KEY;
-const RUNPOD_ENDPOINT      = process.env.RUNPOD_ENDPOINT_ID || "hkc2dat65390jw";
+const RUNPOD_ENDPOINT      = process.env.RUNPOD_ENDPOINT_ID || "8b5zubt1yzl0or";
 const RUNPOD_SYNC_URL      = `https://api.runpod.ai/v2/${RUNPOD_ENDPOINT}/runsync`;
 
 // ── Supabase REST helper ─────────────────────────────────────────────────────

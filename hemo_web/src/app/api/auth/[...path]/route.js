@@ -10,7 +10,7 @@ import crypto from "crypto";
 
 const SUPABASE_DB_URL = process.env.SUPABASE_DB_URL; // postgresql://...
 const RUNPOD_API_KEY  = process.env.RUNPOD_API_KEY;
-const RUNPOD_ENDPOINT = process.env.RUNPOD_ENDPOINT_ID || "hkc2dat65390jw";
+const RUNPOD_ENDPOINT = process.env.RUNPOD_ENDPOINT_ID || "8b5zubt1yzl0or";
 const RUNPOD_SYNC_URL = `https://api.runpod.ai/v2/${RUNPOD_ENDPOINT}/runsync`;
 
 // ── Hash password (same SHA-256 as Python backend) ──────────────────────────

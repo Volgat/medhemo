@@ -142,10 +142,12 @@ def make_system_prompt() -> str:
         "You are Hemo, a caring and versatile health assistant dedicated to providing "
         "personalized health insights and general wellness support. "
         "Your goal is to assist the user with their health questions and concerns in a natural, empathetic way. "
-        "CRITICAL IDENTITY RULES:\n"
+        "CRITICAL IDENTITY AND TOPIC RULES:\n"
         "- Your name is strictly 'Hemo'. You are an assistant, NOT a doctor.\n"
         "- You must NEVER refer to yourself as 'Dr. Hemo', 'Dr Hemo', 'Docteur Hemo', 'Doctor Hemo', or assume any medical doctor title.\n"
-        "- If introducing yourself, you must say only 'Hemo' (e.g. 'I am Hemo' / 'Je suis Hemo') and never use 'Dr.' or 'Doctor' or 'Docteur' as a prefix.\n\n"
+        "- If introducing yourself, you must say only 'Hemo' (e.g. 'I am Hemo' / 'Je suis Hemo') and never use 'Dr.' or 'Doctor' or 'Docteur' as a prefix.\n"
+        "- You are a GENERAL health assistant, not a specialized sickle-cell (drépanocytose) assistant. "
+        "Do NOT mention or bring up 'sickle-cell' or 'drépanocytose' unless the user explicitly asks about it first.\n\n"
         "Only introduce yourself when it is appropriate to do so (like at the start of a conversation "
         "or if the user asks who you are). Vary your greeting and introduction phrases to avoid being repetitive. "
         "ALWAYS detect the user's language based on their input and respond in that same language. "
@@ -153,6 +155,41 @@ def make_system_prompt() -> str:
         "Be clear and precise. Structure your answers if necessary (lists, steps). "
         "Always remind the user to consult a healthcare professional for any medical diagnosis or treatment."
     )
+
+def clean_ai_response(text: str, user_prompt: str) -> str:
+    if not text:
+        return ""
+    import re
+
+    # 1. Replace Dr. Hemo / Docteur Hemo / Doctor Hemo with Hemo (case-insensitive)
+    text = re.sub(r'\b(Dr\.?|Doctor|Docteur)\s+Hemo\b', 'Hemo', text, flags=re.IGNORECASE)
+    text = re.sub(r'\b(docteur|doctor)\s+Hemo\b', 'Hemo', text, flags=re.IGNORECASE)
+
+    # 2. Check if the user's prompt mentions sickle-cell/drépanocytose
+    user_mentioned = False
+    if user_prompt:
+        prompt_lower = user_prompt.lower()
+        keywords = ["drépanocytose", "drepanocytose", "falciforme", "sickle", "globules rouges", "anémie"]
+        user_mentioned = any(kw in prompt_lower for kw in keywords)
+        
+    if not user_mentioned:
+        # Clean up unsolicited sickle-cell/drépanocytose introductory phrases in French
+        text = re.sub(r'concernant la drépanocytose \s*\(anémie falciforme\)\s* et', 'concernant', text, flags=re.IGNORECASE)
+        text = re.sub(r'concernant la drépanocytose et', 'concernant', text, flags=re.IGNORECASE)
+        text = re.sub(r'spécialisé dans la drépanocytose \s*\(anémie falciforme\)\s* et la santé générale', 'dédié à la santé générale', text, flags=re.IGNORECASE)
+        text = re.sub(r'spécialisé dans la drépanocytose et la santé générale', 'dédié à la santé générale', text, flags=re.IGNORECASE)
+        text = re.sub(r'assistant médical spécialisé dans la drépanocytose\b', 'assistant de santé', text, flags=re.IGNORECASE)
+        text = re.sub(r'spécialisé dans la drépanocytose\b', 'dédié à la santé', text, flags=re.IGNORECASE)
+        text = re.sub(r'sur la drépanocytose \s*\(anémie falciforme\)\s* et', 'sur', text, flags=re.IGNORECASE)
+        text = re.sub(r'sur la drépanocytose et', 'sur', text, flags=re.IGNORECASE)
+        
+        # English patterns
+        text = re.sub(r'regarding sickle-cell \s*\(sickle cell anemia\)\s* and', 'regarding', text, flags=re.IGNORECASE)
+        text = re.sub(r'regarding sickle-cell and', 'regarding', text, flags=re.IGNORECASE)
+        text = re.sub(r'specialized in sickle-cell \s*\(sickle cell anemia\)\s* and general health', 'dedicated to general health', text, flags=re.IGNORECASE)
+        text = re.sub(r'specialized in sickle-cell and general health', 'dedicated to general health', text, flags=re.IGNORECASE)
+
+    return text
 
 # ── Core AI helpers ───────────────────────────────────────────────────────────
 
@@ -164,7 +201,14 @@ async def call_medgemma(prompt: str, history: list[dict] | None = None) -> str:
     messages = [{"role": "system", "content": system}]
     for turn in history[-10:]:
         messages.append(turn)
-    messages.append({"role": "user", "content": prompt})
+
+    # Prepend strict identity and topic reminders to prevent fine-tune biases
+    identity_reminder = (
+        "[Strict identity reminder: Your name is Hemo. You are an assistant, NOT a doctor. "
+        "Do NOT call yourself Dr. Hemo or Docteur Hemo. Do NOT mention sickle-cell or drépanocytose "
+        "unless the user explicitly asked about it in their message.]\n\n"
+    )
+    messages.append({"role": "user", "content": identity_reminder + prompt})
 
     payload = {
         "model": MEDGEMMA_MODEL,
@@ -186,7 +230,8 @@ async def call_medgemma(prompt: str, history: list[dict] | None = None) -> str:
         return "I'm sorry, the AI service is temporarily unavailable. Please try again."
 
     data = resp.json()
-    return data["choices"][0]["message"]["content"].strip()
+    response = data["choices"][0]["message"]["content"].strip()
+    return clean_ai_response(response, prompt)
 
 
 async def call_medgemma_stream(prompt: str, history: list[dict] | None = None):
@@ -197,7 +242,13 @@ async def call_medgemma_stream(prompt: str, history: list[dict] | None = None):
     messages = [{"role": "system", "content": system}]
     for turn in history[-10:]:
         messages.append(turn)
-    messages.append({"role": "user", "content": prompt})
+
+    identity_reminder = (
+        "[Strict identity reminder: Your name is Hemo. You are an assistant, NOT a doctor. "
+        "Do NOT call yourself Dr. Hemo or Docteur Hemo. Do NOT mention sickle-cell or drépanocytose "
+        "unless the user explicitly asked about it in their message.]\n\n"
+    )
+    messages.append({"role": "user", "content": identity_reminder + prompt})
 
     payload = {
         "model": MEDGEMMA_MODEL,
@@ -229,12 +280,15 @@ async def call_medgemma_stream(prompt: str, history: list[dict] | None = None):
                     obj = json.loads(chunk)
                     delta = obj["choices"][0]["delta"].get("content", "")
                     if delta:
+                        # Post-process streamed chunk if delta is outputted (raw stream is cleaned at user prefix reminder, 
+                        # but we still track full text)
                         full_text += delta
                         yield f"data: {json.dumps({'delta': delta, 'done': False})}\n\n"
                 except Exception:
                     pass
 
-    yield f"data: {json.dumps({'delta': '', 'done': True, 'full': full_text})}\n\n"
+    cleaned_full = clean_ai_response(full_text, prompt)
+    yield f"data: {json.dumps({'delta': '', 'done': True, 'full': cleaned_full})}\n\n"
 
 
 async def call_llava_description(image_bytes: bytes) -> str:
@@ -361,6 +415,11 @@ async def synthesize_tts(text: str, voice_type: str = "lila") -> bytes:
         if cleaned_text:
             # 1. Remove markdown links: [label](url) -> label
             cleaned_text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', cleaned_text)
+            
+            # Remove parentheses, brackets, and braces to prevent spoken artifacts (e.g. reading "ouvrir la parenthèse")
+            cleaned_text = cleaned_text.replace('(', ' ').replace(')', ' ')
+            cleaned_text = cleaned_text.replace('[', ' ').replace(']', ' ')
+            cleaned_text = cleaned_text.replace('{', ' ').replace('}', ' ')
             
             # 2. Remove markdown headers: #, ##, ###, etc. at the start of a line
             cleaned_text = re.sub(r'(?m)^#+\s*', '', cleaned_text)

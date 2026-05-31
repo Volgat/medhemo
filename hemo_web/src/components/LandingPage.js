@@ -10,7 +10,7 @@ export default function LandingPage({ onLogin, onSignup, onClose }) {
       flex: 1,
       height: '100vh',
       overflowY: 'auto',
-      background: 'white',
+      background: 'radial-gradient(circle at top, #fafdfb 0%, #ffffff 100%)',
       color: '#1a1a1a',
       fontFamily: '"Inter", sans-serif',
       position: 'relative'
@@ -24,50 +24,65 @@ export default function LandingPage({ onLogin, onSignup, onClose }) {
         position: 'sticky',
         top: 0,
         zIndex: 10,
-        background: 'rgba(255,255,255,0.8)',
-        backdropFilter: 'blur(10px)'
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.05)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ 
             width: 32, height: 32, 
-            background: 'linear-gradient(135deg, #8b0000 0%, #1a1a1a 100%)',
+            background: 'linear-gradient(135deg, #4BBE4F 0%, #10a37f 100%)',
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-             <span style={{ color: 'white', fontWeight: 'bold' }}>H</span>
+             <span style={{ color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>H</span>
           </div>
-          <span style={{ fontSize: '1.4rem', fontWeight: 700, letterSpacing: '-0.02em', color: '#1a1a1a' }}>MedHemo</span>
+          <span style={{ fontSize: '1.3rem', fontWeight: 750, letterSpacing: '-0.03em', color: '#10a37f' }}>MedHemo</span>
         </div>
-        <div style={{ display: 'flex', gap: '16px' }}>
+        <div style={{ display: 'flex', gap: '12px' }}>
           <button 
             onClick={onSignup}
             style={{
-              padding: '10px 24px',
+              padding: '10px 22px',
               borderRadius: '8px',
-              background: '#a52a2a',
+              background: '#10a37f',
               color: 'white',
               border: 'none',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              transition: 'background 0.2s',
             }}
+            onMouseOver={e => e.currentTarget.style.background = '#0e906f'}
+            onMouseOut={e => e.currentTarget.style.background = '#10a37f'}
           >
-            Signup
+            S'inscrire
           </button>
           <button 
             onClick={onLogin}
             style={{
-              padding: '10px 24px',
+              padding: '10px 22px',
               borderRadius: '8px',
-              background: 'white',
+              background: 'transparent',
               color: '#1a1a1a',
               border: '1px solid #d1d1d1',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              transition: 'background 0.2s, border-color 0.2s',
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.background = '#f5f5f5';
+              e.currentTarget.style.borderColor = '#999';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.borderColor = '#d1d1d1';
             }}
           >
-            Login
+            Se connecter
           </button>
         </div>
       </header>
@@ -76,7 +91,7 @@ export default function LandingPage({ onLogin, onSignup, onClose }) {
       <section style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '0 40px',
+        padding: '60px 40px',
         textAlign: 'center',
         display: 'flex',
         flexDirection: 'column',
@@ -88,15 +103,16 @@ export default function LandingPage({ onLogin, onSignup, onClose }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           style={{
-            fontSize: '3.5rem',
+            fontSize: '3.2rem',
             fontWeight: 800,
-            lineHeight: 1.1,
-            marginBottom: '16px',
-            color: '#111'
+            lineHeight: 1.15,
+            marginBottom: '20px',
+            color: '#111',
+            letterSpacing: '-0.02em'
           }}
         >
-          Explore the Future of Personalized<br />
-          Health with MedHemo
+          Explorez le futur de la santé<br />
+          personnalisée avec MedHemo
         </motion.h1>
         
         <motion.p 
@@ -104,27 +120,29 @@ export default function LandingPage({ onLogin, onSignup, onClose }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           style={{
-            fontSize: '1.25rem',
-            color: '#666',
+            fontSize: '1.2rem',
+            color: '#555',
             marginBottom: '40px',
-            maxWidth: '800px'
+            maxWidth: '750px',
+            lineHeight: 1.6
           }}
         >
-          Access powerful general health models for comprehensive personal insights
+          Accédez à nos modèles d'analyse de santé pour des conseils clairs, précis et adaptés à votre profil.
         </motion.p>
 
         {/* Hero Image */}
         <motion.div
-           initial={{ opacity: 0, scale: 0.95 }}
+           initial={{ opacity: 0, scale: 0.97 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ delay: 0.2 }}
            style={{
              width: '100%',
-             maxWidth: '900px',
-             borderRadius: '24px',
+             maxWidth: '850px',
+             borderRadius: '20px',
              overflow: 'hidden',
-             marginBottom: '60px',
-             boxShadow: '0 30px 60px rgba(0,0,0,0.1)'
+             marginBottom: '50px',
+             boxShadow: '0 20px 50px rgba(0,0,0,0.06)',
+             border: '1px solid rgba(0,0,0,0.05)'
            }}
         >
           <img 
@@ -144,28 +162,38 @@ export default function LandingPage({ onLogin, onSignup, onClose }) {
           <button
             onClick={onSignup}
             style={{
-              padding: '16px 40px',
+              padding: '16px 36px',
               borderRadius: '12px',
-              background: '#a52a2a',
+              background: 'linear-gradient(135deg, #10a37f 0%, #4BBE4F 100%)',
               color: 'white',
-              fontSize: '1.2rem',
+              fontSize: '1.1rem',
               fontWeight: 700,
               border: 'none',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              boxShadow: '0 10px 20px rgba(165, 42, 42, 0.2)'
+              boxShadow: '0 8px 24px rgba(16, 163, 127, 0.25)',
+              transition: 'transform 0.2s, boxShadow 0.2s'
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 12px 28px rgba(16, 163, 127, 0.35)';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(16, 163, 127, 0.25)';
             }}
           >
-            Get started with MedHemo
+            Commencer avec MedHemo
+            <ChevronRight size={18} />
           </button>
           
-          <div style={{ color: '#888', fontSize: '0.95rem' }}>
-            Sign Up to Unlock General Health Insights
+          <div style={{ color: '#888', fontSize: '0.9rem' }}>
+            Inscrivez-vous pour débloquer vos analyses de santé personnalisées
           </div>
-          <div style={{ color: '#1a1a1a', fontSize: '1rem' }}>
-            Have an Account? <span onClick={onLogin} style={{ fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Login Here</span>
+          <div style={{ color: '#1a1a1a', fontSize: '0.95rem' }}>
+            Déjà inscrit ? <span onClick={onLogin} style={{ fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', color: '#10a37f' }}>Se connecter ici</span>
           </div>
         </motion.div>
       </section>
@@ -191,33 +219,34 @@ export default function LandingPage({ onLogin, onSignup, onClose }) {
           background: 'white',
           padding: '20px',
           borderRadius: '16px',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-          border: '1px solid #eee',
+          boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
+          border: '1px solid #eaeaea',
           width: '320px',
           position: 'relative'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '0.9rem' }}>
-               <div style={{ width: 24, height: 24, background: '#a52a2a', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                 <span style={{ color: 'white', fontSize: 12 }}>H</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 750, fontSize: '0.9rem', color: '#10a37f' }}>
+               <div style={{ width: 24, height: 24, background: 'linear-gradient(135deg, #4BBE4F 0%, #10a37f 100%)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                 <span style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>H</span>
                </div>
-               MedHemo Assistant
+               Assistant MedHemo
             </div>
-            <X size={16} color="#aaa" style={{ cursor: 'pointer' }} onClick={() => {}} />
+            <X size={16} color="#aaa" style={{ cursor: 'pointer' }} onClick={onClose} />
           </div>
           <div style={{ 
-            background: '#f4f4f4', 
+            background: '#f6f9f7', 
             padding: '12px', 
             borderRadius: '10px', 
-            color: '#666', 
-            fontSize: '0.9rem',
-            marginBottom: '10px'
+            color: '#444', 
+            fontSize: '0.88rem',
+            marginBottom: '10px',
+            border: '1px solid rgba(16, 163, 127, 0.05)'
           }}>
-            How can I help you?
+            Comment puis-je vous aider aujourd'hui ?
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#999', fontSize: '0.8rem' }}>
-            <MessageCircle size={14} />
-             Type your message...
+            <MessageCircle size={14} color="#10a37f" />
+             Discuter avec Hemo...
           </div>
         </div>
 
@@ -228,22 +257,21 @@ export default function LandingPage({ onLogin, onSignup, onClose }) {
             width: '64px',
             height: '64px',
             borderRadius: '32px',
-            background: '#a52a2a',
+            background: 'linear-gradient(135deg, #4BBE4F 0%, #10a37f 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            boxShadow: '0 10px 20px rgba(165, 42, 42, 0.3)',
-            color: 'white'
+            boxShadow: '0 8px 24px rgba(16, 163, 127, 0.3)',
+            color: 'white',
+            transition: 'transform 0.2s'
           }}
+          onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <MessageCircle size={32} />
+          <MessageCircle size={28} />
         </div>
       </motion.div>
-
-      <style jsx>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-      `}</style>
     </div>
   );
 }

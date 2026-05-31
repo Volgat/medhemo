@@ -1,17 +1,33 @@
 "use client";
 
-import { useState } from "react";
 import {
-  Volume2,   VolumeX,
-  Thermometer, Wind, Settings2,
-  MessageSquarePlus, Trash2,
-  ChevronDown, ChevronRight,
-  Info, LogOut, Sun, Moon, Loader2
+  Settings2,
+  Trash2,
+  MessageSquarePlus,
+  LogOut
 } from "lucide-react";
+
+const TRANSLATIONS = {
+  fr: {
+    history: "Historique",
+    clearHistory: "Effacer l'historique",
+    noConversations: "Aucune conversation",
+    settings: "Paramètres",
+    logout: "Déconnexion",
+  },
+  en: {
+    history: "History",
+    clearHistory: "Clear history",
+    noConversations: "No conversations",
+    settings: "Settings",
+    logout: "Logout",
+  }
+};
 
 // ── Main Sidebar ──────────────────────────────────────────────────────────────
 export default function Sidebar({
   isOpen = true,
+  config = {},
   history = [],
   onClearHistory,
   onLogout,
@@ -19,11 +35,14 @@ export default function Sidebar({
   onLogoClick,
   onSettingsClick
 }) {
+  const lang = config.language || "fr";
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS["fr"][key];
+
   return (
     <nav className={`sidebar ${isOpen ? "" : "collapsed"}`}>
       {/* Logo */}
       <div className="sidebar-logo" onClick={onLogoClick} style={{ cursor: "pointer" }}>
-        <div className="logo-icon" style={{ background: "linear-gradient(135deg, #a52a2a 0%, #1a1a1a 100%)" }}>
+        <div className="logo-icon" style={{ background: "linear-gradient(135deg, #4BBE4F 0%, #10a37f 100%)" }}>
           <span style={{ color: "white", fontSize: "1rem" }}>H</span>
         </div>
         <span>Hemo Lab</span>
@@ -31,12 +50,12 @@ export default function Sidebar({
 
       {/* History header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 8px", marginTop: 8 }}>
-        <span className="sidebar-section" style={{ margin: 0, padding: 0 }}>History</span>
+        <span className="sidebar-section" style={{ margin: 0, padding: 0 }}>{t("history")}</span>
         {history.length > 0 && (
           <button
             onClick={onClearHistory}
             style={{ color: "var(--sidebar-muted)", display: "flex", cursor: "pointer", border: "none", background: "none", padding: 2, borderRadius: 4, transition: "color 0.15s" }}
-            title="Clear history"
+            title={t("clearHistory")}
             onMouseOver={e => e.currentTarget.style.color = "var(--danger)"}
             onMouseOut={e => e.currentTarget.style.color = "var(--sidebar-muted)"}
           >
@@ -50,7 +69,7 @@ export default function Sidebar({
         {history.length === 0 ? (
           <div style={{ padding: "10px 8px", fontSize: "0.75rem", color: "var(--sidebar-muted)", display: "flex", alignItems: "center", gap: 8 }}>
             <MessageSquarePlus size={13} />
-            <span>No conversations</span>
+            <span>{t("noConversations")}</span>
           </div>
         ) : (
           history
@@ -134,7 +153,7 @@ export default function Sidebar({
               onMouseOut={e => e.currentTarget.style.background = "transparent"}
             >
               <Settings2 size={15} />
-              <span>Paramètres</span>
+              <span>{t("settings")}</span>
             </button>
           </div>
         )}
@@ -154,7 +173,7 @@ export default function Sidebar({
             onMouseOut={e => e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)"}
           >
             <LogOut size={15} />
-            <span>Déconnexion</span>
+            <span>{t("logout")}</span>
           </button>
         )}
         <div style={{ fontSize: "0.62rem", color: "var(--sidebar-muted)", textAlign: "center", marginTop: 12 }}>

@@ -13,10 +13,64 @@ import { useRouter } from "next/navigation";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
+const TRANSLATIONS = {
+  fr: {
+    welcome: "Bonjour ! Je suis **Hemo**, votre assistant santé personnel. Comment puis-je vous aider aujourd'hui ?",
+    resetMsg: "Conversation réinitialisée. Comment puis-je vous aider ?",
+    processing: "Traitement...",
+    speaking: "Parle...",
+    listening: "Écoute...",
+    conversation: "Conversation",
+    recording: "Enregistrement",
+    online: "En ligne",
+    hideSidebar: "Masquer la barre",
+    showSidebar: "Afficher la barre",
+    newChat: "Nouvelle conversation",
+    hemoListening: "Hemo vous écoute...",
+    hemoAnalyzing: "Hemo analyse...",
+    hemoResponding: "Hemo répond...",
+    readyToSpeak: "Prêt à parler",
+    stop: "Arrêter",
+    close: "Fermer",
+    placeholderConv: "Mode conversation actif...",
+    placeholderAsk: "Posez une question à Hemo...",
+    hint: "MedHemo AI · Conseils de santé personnalisés · Collez une image directement",
+    backHome: "Retour à l'accueil",
+    whisperTranscription: "Transcription vocale",
+    visualDescription: "Description visuelle détaillée"
+  },
+  en: {
+    welcome: "Hello! I am **Hemo**, your personal health assistant. How can I help you today?",
+    resetMsg: "Conversation reset. How can I help you?",
+    processing: "Processing...",
+    speaking: "Speaking...",
+    listening: "Listening...",
+    conversation: "Conversation",
+    recording: "Recording",
+    online: "Online",
+    hideSidebar: "Hide sidebar",
+    showSidebar: "Show sidebar",
+    newChat: "New conversation",
+    hemoListening: "Hemo is listening...",
+    hemoAnalyzing: "Hemo is analyzing...",
+    hemoResponding: "Hemo is responding...",
+    readyToSpeak: "Ready to speak",
+    stop: "Stop",
+    close: "Close",
+    placeholderConv: "Conversation mode active...",
+    placeholderAsk: "Ask Hemo a question...",
+    hint: "MedHemo AI · Personalized Health Insights · Paste an image directly",
+    backHome: "Back to Home",
+    whisperTranscription: "Voice transcription",
+    visualDescription: "Detailed visual description"
+  }
+};
+
 const DEFAULT_CONFIG = {
   ttsEnabled:    true,
   voiceType:     "lila",
   theme:         "dark",
+  language:      "fr",
   temperature:   0.7,
   maxTokens:     500,
   streamMode:    true,
@@ -96,6 +150,27 @@ export default function UnifiedPage() {
 
   // Sidebar config (temperature, max tokens, TTS lang, streaming, lang, expert mode)
   const [config, setConfig] = useState(DEFAULT_CONFIG);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("hemo_config");
+    if (saved) {
+      try {
+        setConfig(prev => ({ ...prev, ...JSON.parse(saved) }));
+      } catch (e) {
+        console.error("Error loading config from localStorage:", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("hemo_config", JSON.stringify(config));
+    if (config.theme) {
+      document.documentElement.setAttribute("data-theme", config.theme);
+    }
+  }, [config]);
+
+  const lang = config.language || "fr";
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS["fr"][key];
 
   // Image
   const [imageFile, setImageFile]       = useState(null);
@@ -234,7 +309,7 @@ export default function UnifiedPage() {
     } catch (err) {
       setMessages(p => [...p, {
         role: "assistant",
-        content: `⚠️ Erreur de connexion (${err.message}). Vérifiez que le backend tourne sur le port 8000.`,
+        content: `⚠️ Erreur de connexion - ${err.message}. Vérifiez que le backend tourne sur le port 8000.`,
       }]);
     } finally {
       setIsLoading(false);
@@ -302,7 +377,7 @@ export default function UnifiedPage() {
   };
 
   const clearChat = () => {
-    setMessages([{ role: "assistant", content: "Conversation réinitialisée. Comment puis-je vous aider ?" }]);
+    setMessages([{ role: "assistant", content: t("resetMsg") }]);
     setHistory([]);
     setMsgHistory([]);
   };
@@ -310,11 +385,11 @@ export default function UnifiedPage() {
   const fmtTime = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
   const statusLabel = isLoading
-    ? "Processing..."
-    : isSpeaking  ? "Speaking..."
-    : convMode    ? (isRecording ? "Listening..." : "Conversation")
-    : isRecording ? "Recording"
-    : "Online";
+    ? t("processing")
+    : isSpeaking  ? t("speaking")
+    : convMode    ? (isRecording ? t("listening") : t("conversation"))
+    : isRecording ? t("recording")
+    : t("online");
 
   const statusColor = isLoading ? "var(--warning)"
     : isSpeaking             ? "#a78bfa"
@@ -326,6 +401,7 @@ export default function UnifiedPage() {
       {loggedUser && (
         <Sidebar
           isOpen={isSidebarOpen}
+          config={config}
           history={msgHistory}
           onClearHistory={clearChat}
           onLogout={handleLogout}
@@ -354,7 +430,7 @@ export default function UnifiedPage() {
                 <button 
                   className="icon-action-btn" 
                   onClick={() => setIsSidebarOpen(prev => !prev)} 
-                  title={isSidebarOpen ? "Masquer la barre" : "Afficher la barre"}
+                  title={isSidebarOpen ? t("hideSidebar") : t("showSidebar")}
                   style={{ marginRight: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   {isSidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
@@ -378,7 +454,7 @@ export default function UnifiedPage() {
                     <span>{loggedUser.username}</span>
                   </div>
                 )}
-                <button className="icon-action-btn" onClick={clearChat} title="Nouvelle conversation">
+                <button className="icon-action-btn" onClick={clearChat} title={t("newChat")}>
                   <RotateCcw size={14} />
                 </button>
               </div>
@@ -400,7 +476,7 @@ export default function UnifiedPage() {
                   />
                 </div>
                 <h2 style={{ fontSize: '1.5rem', marginBottom: 10 }}>
-                  {isRecording ? "Hemo vous écoute..." : isLoading ? "Hemo analyse..." : isSpeaking ? "Hemo répond..." : "Prêt à parler"}
+                  {isRecording ? t("hemoListening") : isLoading ? t("hemoAnalyzing") : isSpeaking ? t("hemoResponding") : t("readyToSpeak")}
                 </h2>
                 {isRecording && <div style={{ fontSize: '1.2rem', color: 'var(--danger)' }}>{fmtTime(recordSeconds)}</div>}
                 <div style={{ marginTop: 40, display: 'flex', gap: 20 }}>
@@ -409,7 +485,7 @@ export default function UnifiedPage() {
                       onClick={stopRecording}
                       style={{ padding: '15px 30px', borderRadius: 30, background: 'var(--danger)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600 }}
                     >
-                      Arrêter
+                      {t("stop")}
                     </button>
                   ) : !isLoading && !isSpeaking && (
                     <button 
@@ -457,16 +533,16 @@ export default function UnifiedPage() {
                       <div className="message-bubble">
                         {msg.role === "assistant" && <div className="message-name">Hemo</div>}
                         {msg.isTranscription && (
-                          <div className="message-name" style={{ color: "var(--warning)" }}>Transcription Whisper</div>
+                          <div className="message-name" style={{ color: "var(--warning)" }}>{t("whisperTranscription")}</div>
                         )}
                         {msg.preview && (
                           <img src={msg.preview} alt="Uploaded" style={{ maxWidth: 200, borderRadius: 8, marginBottom: 6, display: "block" }} />
                         )}
-                        {/* Expert mode: LLaVA visual description */}
+                        {/* Expert mode: visual description */}
                         {msg.visualDescription && config.expertMode && (
                           <details style={{ marginBottom: 6 }}>
                             <summary style={{ fontSize: "0.72rem", cursor: "pointer", color: "var(--text-muted)" }}>
-                              LLaVA Visual Description
+                              {t("visualDescription")}
                             </summary>
                             <p style={{ fontSize: "0.78rem", lineHeight: 1.6, marginTop: 4, color: "var(--text-secondary)" }}>
                               {msg.visualDescription}
@@ -483,7 +559,13 @@ export default function UnifiedPage() {
                             ))}
                           </div>
                         )}
-                        <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }} />
+                        <div dangerouslySetInnerHTML={{
+                          __html: formatMessage(
+                            msg.content === "Bonjour ! Je suis **Hemo**, votre assistant santé personnel. Comment puis-je vous aider aujourd'hui ?"
+                              ? t("welcome")
+                              : msg.content
+                          )
+                        }} />
                       </div>
                     </div>
                   ))}
@@ -530,13 +612,7 @@ export default function UnifiedPage() {
                     <button
                       className="input-icon-btn"
                       title="Attach an image"
-                      onClick={() => {
-                        if (loggedUser?.subscription_status !== "active") {
-                          triggerUpgrade();
-                        } else {
-                          fileInputRef.current?.click();
-                        }
-                      }}
+                      onClick={() => fileInputRef.current?.click()}
                       disabled={isLoading}
                     >
                       <Paperclip size={17} />
@@ -546,13 +622,7 @@ export default function UnifiedPage() {
                       type="file"
                       accept="image/*"
                       style={{ display: "none" }}
-                      onChange={e => {
-                        if (loggedUser?.subscription_status !== "active") {
-                          triggerUpgrade();
-                        } else {
-                          pickImage(e.target.files[0]);
-                        }
-                      }}
+                      onChange={e => pickImage(e.target.files[0])}
                     />
 
                     <input
@@ -566,14 +636,10 @@ export default function UnifiedPage() {
                         const item = [...e.clipboardData.items].find(i => i.type.startsWith("image/"));
                         if (item) {
                           e.preventDefault();
-                          if (loggedUser?.subscription_status !== "active") {
-                            triggerUpgrade();
-                          } else {
-                            pickImage(item.getAsFile());
-                          }
+                          pickImage(item.getAsFile());
                         }
                       }}
-                      placeholder={convMode ? "Conversation mode active..." : "Ask Hemo a question... "}
+                      placeholder={convMode ? t("placeholderConv") : t("placeholderAsk")}
                       disabled={isLoading || convMode}
                     />
 
@@ -582,15 +648,11 @@ export default function UnifiedPage() {
                         className={`input-icon-btn ${isRecording && !convMode ? "recording" : ""}`}
                         title={isRecording && !convMode ? "Stop and send" : "Interaction Vocale"}
                         onClick={() => {
-                          if (loggedUser?.subscription_status !== "active") {
-                            triggerUpgrade();
+                          if (isRecording && !convMode) {
+                            stopRecording();
                           } else {
-                            if (isRecording && !convMode) {
-                              stopRecording();
-                            } else {
-                              setIsVoiceMode(true);
-                              startRecording(false);
-                            }
+                            setIsVoiceMode(true);
+                            startRecording(false);
                           }
                         }}
                         disabled={isLoading || isSpeaking || convMode}
@@ -601,13 +663,7 @@ export default function UnifiedPage() {
                       <button
                         className={`input-icon-btn ${convMode ? "conv-active" : ""}`}
                         title={convMode ? "Stop conversation" : "Continuous conversation mode"}
-                        onClick={() => {
-                          if (loggedUser?.subscription_status !== "active") {
-                            triggerUpgrade();
-                          } else {
-                            toggleConvMode();
-                          }
-                        }}
+                        onClick={toggleConvMode}
                         disabled={isLoading && !convMode}
                       >
                         <MessageCircle size={17} />
@@ -626,8 +682,8 @@ export default function UnifiedPage() {
 
                   <p className="input-hint">
                     <Zap size={10} style={{ display: "inline", marginRight: 3, color: "var(--accent)" }} />
-                    MedHemo AI · Personalized Health Insights · Paste an image directly
-                    {loggedUser && <span style={{ cursor: 'pointer', color: 'var(--accent)', marginLeft: 8 }} onClick={() => setShowLanding(true)}>Back to Home</span>}
+                    {t("hint")}
+                    {loggedUser && <span style={{ cursor: 'pointer', color: 'var(--accent)', marginLeft: 8 }} onClick={() => setShowLanding(true)}>{t("backHome")}</span>}
                   </p>
                 </div>
               </>

@@ -103,7 +103,7 @@ export default function UnifiedPage() {
     if (!loggedUser) return;
     setBillingLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/billing/create-checkout-session`, {
+      const res = await fetch(`/api/billing/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: loggedUser.username }),
@@ -124,7 +124,7 @@ export default function UnifiedPage() {
     if (!loggedUser) return;
     setBillingLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/billing/portal`, {
+      const res = await fetch(`/api/billing/portal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: loggedUser.username }),
@@ -199,7 +199,7 @@ export default function UnifiedPage() {
   useEffect(() => {
     const fetchStatus = async (user) => {
       try {
-        const res = await fetch(`${API_BASE}/api/auth/status?username=${user.username}`);
+        const res = await fetch(`/api/auth/status?username=${user.username}`);
         if (res.ok) {
           const data = await res.json();
           const updated = { ...user, subscription_status: data.subscription_status };

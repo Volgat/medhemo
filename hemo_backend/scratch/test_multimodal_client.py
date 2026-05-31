@@ -39,8 +39,8 @@ def test():
     username = setup_test_user()
     client = TestClient(app)
     
-    # 1x1 transparent PNG bytes
-    img_bytes = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x00\x00\x00\x003a\x0b\xca\x00\x00\x00\nIDATx\x9cc`\x00\x00\x00\x02\x00\x01H\xaf\xa4q\x00\x00\x00\x00IEND\xaeB`\x82"
+    import base64
+    img_bytes = base64.b64decode("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7")
     
     files = {
         "image": ("test.png", img_bytes, "image/png")

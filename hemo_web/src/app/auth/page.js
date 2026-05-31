@@ -26,7 +26,7 @@ export default function AuthPage() {
     const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
     
     try {
-      const res = await fetch(`${API_BASE}${endpoint}`, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

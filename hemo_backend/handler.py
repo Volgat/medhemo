@@ -5,10 +5,15 @@ Point d'entrée pour RunPod Serverless.
 Reçoit des jobs {"input": {"action": ..., ...}} et les dispatch vers les fonctions IA.
 
 Actions supportées :
-  - "multimodal"  : pipeline unifié texte/audio/image + TTS optionnel
-  - "tts"         : synthèse vocale seule
-  - "chat"        : chat texte simple
-  - "health"      : ping de santé
+  - "multimodal"                    : pipeline unifié texte/audio/image + TTS optionnel
+  - "tts"                           : synthèse vocale seule
+  - "chat"                          : chat texte simple
+  - "health"                        : ping de santé
+  - "auth_signup"                   : inscription utilisateur
+  - "auth_login"                    : connexion utilisateur
+  - "auth_status"                   : statut abonnement utilisateur
+  - "billing_create-checkout-session" : créer session Stripe
+  - "billing_portal"                : portail de facturation Stripe
 """
 
 import os
@@ -35,6 +40,11 @@ from main import (
     LLAVA_MODEL,
     WHISPER_MODEL,
 )
+
+# Importe les helpers DB/auth
+from database import init_db, get_db, User, hash_password, verify_password
+from sqlalchemy.orm import Session
+import stripe
 
 logging.basicConfig(
     level=logging.INFO,
@@ -192,15 +202,175 @@ async def handle_health(_job_input: dict) -> dict:
     }
 
 
+# ───────────────────────────────────────────────────────────────────────────────
+#  Auth handlers (signup, login, status)
+# ───────────────────────────────────────────────────────────────────────────────
+
+def _get_db_session():
+    """Get a synchronous DB session (for use in sync handler context)."""
+    return next(get_db())
+
+
+async def handle_auth_signup(job_input: dict) -> dict:
+    username = job_input.get("username", "").strip()
+    email    = job_input.get("email",    "").strip()
+    password = job_input.get("password", "").strip()
+
+    if not username or not email or not password:
+        return {"detail": "Username, email and password are required."}
+
+    try:
+        db = _get_db_session()
+        existing = db.query(User).filter(User.username == username).first()
+        if existing:
+            return {"detail": "Username already exists"}
+
+        new_user = User(
+            username=username,
+            email=email,
+            hashed_password=hash_password(password),
+            subscription_status="inactive",
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return {
+            "message": "Success",
+            "username": new_user.username,
+            "token": "signup-token",
+            "subscription_status": new_user.subscription_status or "inactive",
+        }
+    except Exception as e:
+        logger.error(f"Signup error: {e}")
+        return {"detail": str(e)}
+
+
+async def handle_auth_login(job_input: dict) -> dict:
+    username = job_input.get("username", "").strip()
+    password = job_input.get("password", "").strip()
+
+    if not username or not password:
+        return {"detail": "Username and password are required."}
+
+    try:
+        db = _get_db_session()
+        user = db.query(User).filter(User.username == username).first()
+        if not user or not verify_password(password, user.hashed_password):
+            return {"detail": "Invalid credentials"}
+        return {
+            "message": "Logged in",
+            "username": user.username,
+            "token": "login-token",
+            "subscription_status": user.subscription_status or "inactive",
+        }
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        return {"detail": str(e)}
+
+
+async def handle_auth_status(job_input: dict) -> dict:
+    username = job_input.get("username", "").strip()
+    if not username:
+        return {"detail": "Username required"}
+
+    try:
+        db = _get_db_session()
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            return {"detail": "User not found"}
+        return {
+            "username": user.username,
+            "email": user.email,
+            "subscription_status": user.subscription_status or "inactive",
+        }
+    except Exception as e:
+        logger.error(f"Auth status error: {e}")
+        return {"detail": str(e)}
+
+
+# ───────────────────────────────────────────────────────────────────────────────
+#  Billing handlers (Stripe)
+# ───────────────────────────────────────────────────────────────────────────────
+
+async def handle_billing_checkout(job_input: dict) -> dict:
+    username       = job_input.get("username", "")
+    stripe_key     = os.getenv("STRIPE_SECRET_KEY", "")
+    stripe_price   = os.getenv("STRIPE_PRICE_ID", "")
+    frontend_url   = os.getenv("FRONTEND_URL", "https://www.medhemo.com")
+
+    if not stripe_key:
+        return {"detail": "Stripe not configured"}
+
+    try:
+        import stripe as _stripe
+        _stripe.api_key = stripe_key
+        db   = _get_db_session()
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            return {"detail": "User not found"}
+
+        if not user.stripe_customer_id:
+            customer = _stripe.Customer.create(email=user.email, metadata={"username": username})
+            user.stripe_customer_id = customer.id
+            db.commit()
+
+        session = _stripe.checkout.Session.create(
+            customer=user.stripe_customer_id,
+            payment_method_types=["card"],
+            line_items=[{"price": stripe_price, "quantity": 1}],
+            mode="subscription",
+            success_url=f"{frontend_url}/?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{frontend_url}/",
+            metadata={"username": username},
+        )
+        return {"url": session.url}
+    except Exception as e:
+        logger.error(f"Billing checkout error: {e}")
+        return {"detail": str(e)}
+
+
+async def handle_billing_portal(job_input: dict) -> dict:
+    username     = job_input.get("username", "")
+    stripe_key   = os.getenv("STRIPE_SECRET_KEY", "")
+    frontend_url = os.getenv("FRONTEND_URL", "https://www.medhemo.com")
+
+    if not stripe_key:
+        return {"detail": "Stripe not configured"}
+
+    try:
+        import stripe as _stripe
+        _stripe.api_key = stripe_key
+        db   = _get_db_session()
+        user = db.query(User).filter(User.username == username).first()
+        if not user or not user.stripe_customer_id:
+            return {"detail": "No active billing profile found"}
+
+        session = _stripe.billing_portal.Session.create(
+            customer=user.stripe_customer_id,
+            return_url=frontend_url,
+        )
+        return {"url": session.url}
+    except Exception as e:
+        logger.error(f"Billing portal error: {e}")
+        return {"detail": str(e)}
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  Main dispatcher — RunPod entrypoint
 # ─────────────────────────────────────────────────────────────────────────────
 
 ACTIONS = {
-    "multimodal": handle_multimodal,
-    "tts":        handle_tts,
-    "chat":       handle_chat,
-    "health":     handle_health,
+    "multimodal":                     handle_multimodal,
+    "tts":                            handle_tts,
+    "chat":                           handle_chat,
+    "health":                         handle_health,
+    # Auth
+    "auth_signup":                    handle_auth_signup,
+    "auth_login":                     handle_auth_login,
+    "auth_status":                    handle_auth_status,
+    # Billing
+    "billing_create-checkout-session": handle_billing_checkout,
+    "billing_portal":                  handle_billing_portal,
 }
 
 

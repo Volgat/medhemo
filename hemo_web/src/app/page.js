@@ -231,7 +231,7 @@ export default function UnifiedPage() {
     if (!config.ttsEnabled || !text) return;
     try {
       setIsSpeaking(true);
-      const res = await fetch(`${API_BASE}/api/tts`, {
+      const res = await fetch(`/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, history: [], voice_type: config.voiceType }),
@@ -283,7 +283,7 @@ export default function UnifiedPage() {
     if (loggedUser) form.append("username", loggedUser.username);
 
     try {
-      const res  = await fetch(`${API_BASE}/api/multimodal`, { method: "POST", body: form });
+      const res  = await fetch(`/api/hemo`, { method: "POST", body: form });
       if (!res.ok) throw new Error(`Backend ${res.status}`);
       const data = await res.json();
 

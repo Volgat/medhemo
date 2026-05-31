@@ -21,8 +21,11 @@ COPY . .
 ENV PORT=8000
 ENV HOST=0.0.0.0
 
-# Expose the default port
+# Expose default port (used only in local/GPU pod mode)
 EXPOSE 8000
 
-# Run the application using shell form to resolve environment variables
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
+# Run the RunPod Serverless handler
+# When deployed on RunPod Serverless, this starts the job handler.
+# For local testing with uvicorn, override CMD:
+#   docker run ... python -m uvicorn main:app --host 0.0.0.0 --port 8000
+CMD ["python", "-u", "handler.py"]

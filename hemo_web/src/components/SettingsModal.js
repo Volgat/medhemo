@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   X, Settings2, Volume2, Thermometer, CreditCard,
-  Loader2, Info, Trash2, Zap
+  Loader2, Info, Trash2, Zap, Sun, Moon, Play, Pause
 } from "lucide-react";
 
 const TRANSLATIONS = {
@@ -124,16 +124,36 @@ export default function SettingsModal({
   defaultTab = "general"
 }) {
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [playingPreview, setPlayingPreview] = useState(null);
+  const previewAudioRef = useRef(null);
 
   if (!isOpen) return null;
 
-  const lang = config.language || "fr";
-  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS["fr"][key];
+  const lang = config.language || "en";
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS["en"][key];
 
   const set = (key, value) => {
     onConfigChange?.({ ...config, [key]: value });
     if (key === "theme") {
       document.documentElement.setAttribute("data-theme", value);
+    }
+  };
+
+  const togglePreview = (e, voiceId) => {
+    e.stopPropagation(); // Prevent card selection click trigger
+    if (playingPreview === voiceId) {
+      previewAudioRef.current?.pause();
+      setPlayingPreview(null);
+    } else {
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause();
+      }
+      const audio = new Audio(`/${voiceId}.wav`);
+      previewAudioRef.current = audio;
+      setPlayingPreview(voiceId);
+      audio.onended = () => setPlayingPreview(null);
+      audio.onerror = () => setPlayingPreview(null);
+      audio.play().catch(() => setPlayingPreview(null));
     }
   };
 
@@ -158,26 +178,6 @@ export default function SettingsModal({
     </div>
   );
 
-  const renderSelect = (label, value, onChange, options) => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, margin: "8px 0" }}>
-      <label style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 500 }}>{label}</label>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        style={{
-          width: "100%", padding: "8px 12px", borderRadius: 8,
-          background: "var(--input-bg)", border: "1px solid var(--border)",
-          color: "var(--text-primary)", fontSize: "0.85rem",
-          cursor: "pointer", outline: "none",
-        }}
-      >
-        {options.map(({ value: v, label: l }) => (
-          <option key={v} value={v}>{l}</option>
-        ))}
-      </select>
-    </div>
-  );
-
   const renderRange = (label, value, onChange, min, max, step) => (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, margin: "12px 0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
@@ -193,6 +193,172 @@ export default function SettingsModal({
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.65rem", color: "var(--text-muted)" }}>
         <span>{min}</span><span>{max}</span>
       </div>
+    </div>
+  );
+
+  // Styled Theme Selector (Cards instead of dropdown)
+  const renderThemeSelector = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, margin: "8px 0" }}>
+      <label style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 500 }}>{t("appTheme")}</label>
+      <div style={{ display: "flex", gap: 12 }}>
+        <button
+          onClick={() => set("theme", "light")}
+          style={{
+            flex: 1, padding: "12px", borderRadius: 10,
+            border: config.theme === "light" ? "2px solid var(--accent)" : "1px solid var(--border)",
+            background: config.theme === "light" ? "var(--accent-muted)" : "var(--input-bg)",
+            color: config.theme === "light" ? "var(--accent)" : "var(--text-primary)",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontSize: "0.85rem"
+          }}
+        >
+          <Sun size={16} />
+          <span>{t("themeLight")}</span>
+        </button>
+        <button
+          onClick={() => set("theme", "dark")}
+          style={{
+            flex: 1, padding: "12px", borderRadius: 10,
+            border: config.theme === "dark" ? "2px solid var(--accent)" : "1px solid var(--border)",
+            background: config.theme === "dark" ? "var(--accent-muted)" : "var(--input-bg)",
+            color: config.theme === "dark" ? "var(--accent)" : "var(--text-primary)",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontSize: "0.85rem"
+          }}
+        >
+          <Moon size={16} />
+          <span>{t("themeDark")}</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  // Styled Language Selector (Cards instead of dropdown)
+  const renderLanguageSelector = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, margin: "8px 0" }}>
+      <label style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 500 }}>{t("appLanguage")}</label>
+      <div style={{ display: "flex", gap: 12 }}>
+        <button
+          onClick={() => set("language", "fr")}
+          style={{
+            flex: 1, padding: "12px", borderRadius: 10,
+            border: config.language === "fr" ? "2px solid var(--accent)" : "1px solid var(--border)",
+            background: config.language === "fr" ? "var(--accent-muted)" : "var(--input-bg)",
+            color: config.language === "fr" ? "var(--accent)" : "var(--text-primary)",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontSize: "0.85rem"
+          }}
+        >
+          <span style={{ fontSize: "1rem" }}>🇫🇷</span>
+          <span>{t("langFr")}</span>
+        </button>
+        <button
+          onClick={() => set("language", "en")}
+          style={{
+            flex: 1, padding: "12px", borderRadius: 10,
+            border: config.language === "en" ? "2px solid var(--accent)" : "1px solid var(--border)",
+            background: config.language === "en" ? "var(--accent-muted)" : "var(--input-bg)",
+            color: config.language === "en" ? "var(--accent)" : "var(--text-primary)",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontSize: "0.85rem"
+          }}
+        >
+          <span style={{ fontSize: "1rem" }}>🇬🇧</span>
+          <span>{t("langEn")}</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const voices = [
+    { id: "lila", label: t("voiceLila"), gender: "F", desc: lang === "fr" ? "Voix féminine douce et naturelle" : "Soft and natural female voice", preview: true },
+    { id: "ethan", label: t("voiceEthan"), gender: "M", desc: lang === "fr" ? "Voix masculine calme et chaleureuse" : "Calm and warm male voice", preview: true },
+    { id: "female1", label: t("voiceFemale1"), gender: "F", desc: lang === "fr" ? "Ton clair et posé" : "Clear and composed tone", preview: false },
+    { id: "male1", label: t("voiceMale1"), gender: "M", desc: lang === "fr" ? "Ton posé et apaisant" : "Composed and soothing tone", preview: false },
+    { id: "female2", label: t("voiceFemale2"), gender: "F", desc: lang === "fr" ? "Profil professionnel" : "Professional profile voice", preview: false },
+    { id: "male2", label: t("voiceMale2"), gender: "M", desc: lang === "fr" ? "Profil professionnel" : "Professional profile voice", preview: false },
+  ];
+
+  // Styled Voice List Card Picker (Grid/List instead of dropdown)
+  const renderVoiceSelector = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "12px 0" }}>
+      <label style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 500 }}>{t("assistantVoice")}</label>
+      <div 
+        style={{ 
+          display: "flex", 
+          flexDirection: "column", 
+          gap: 6, 
+          maxHeight: "185px", 
+          overflowY: "auto", 
+          paddingRight: "4px"
+        }}
+        className="voice-picker-list"
+      >
+        {voices.map((v) => {
+          const isSelected = config.voiceType === v.id;
+          return (
+            <div
+              key={v.id}
+              onClick={() => set("voiceType", v.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                padding: "8px 12px",
+                borderRadius: 10,
+                cursor: "pointer",
+                transition: "all 0.15s",
+                border: isSelected ? "2px solid var(--accent)" : "1px solid var(--border)",
+                background: isSelected ? "var(--accent-muted)" : "var(--input-bg)",
+              }}
+            >
+              {/* Gender circular badge */}
+              <div style={{
+                width: 30, height: 30, borderRadius: "50%",
+                background: isSelected ? "var(--accent)" : "var(--border)",
+                color: isSelected ? "white" : "var(--text-secondary)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontWeight: 700, fontSize: "0.75rem", flexShrink: 0
+              }}>
+                {v.gender}
+              </div>
+
+              {/* Voice details */}
+              <div style={{ flex: 1, marginLeft: 12, display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: 650, color: "var(--text-primary)" }}>{v.label}</span>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-secondary)", marginTop: 1 }}>{v.desc}</span>
+              </div>
+
+              {/* Play preview trigger if supported */}
+              {v.preview && (
+                <button
+                  onClick={(e) => togglePreview(e, v.id)}
+                  style={{
+                    width: 28, height: 28, borderRadius: "50%",
+                    border: "none", cursor: "pointer",
+                    background: playingPreview === v.id ? "var(--accent)" : "var(--border)",
+                    color: playingPreview === v.id ? "white" : "var(--text-secondary)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.2s"
+                  }}
+                  title="Preview voice"
+                >
+                  {playingPreview === v.id ? <Pause size={12} /> : <Play size={12} style={{ marginLeft: 1 }} />}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      <style jsx>{`
+        .voice-picker-list::-webkit-scrollbar {
+          width: 4px;
+        }
+        .voice-picker-list::-webkit-scrollbar-thumb {
+          background: var(--border);
+          border-radius: 4px;
+        }
+      `}</style>
     </div>
   );
 
@@ -219,7 +385,8 @@ export default function SettingsModal({
         flexDirection: "column",
         overflow: "hidden",
         boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
-        color: "var(--text-primary)"
+        color: "var(--text-primary)",
+        fontFamily: '"Inter", sans-serif'
       }}>
         {/* Header */}
         <div style={{
@@ -234,7 +401,10 @@ export default function SettingsModal({
             <span>{t("settings")}</span>
           </h2>
           <button
-            onClick={onClose}
+            onClick={() => {
+              if (previewAudioRef.current) previewAudioRef.current.pause();
+              onClose();
+            }}
             style={{
               background: "none",
               border: "none",
@@ -328,33 +498,23 @@ export default function SettingsModal({
           {/* Content Pane */}
           <div style={{
             flex: 1,
-            padding: "24px",
+            padding: "20px 24px",
             overflowY: "auto",
             display: "flex",
             flexDirection: "column"
           }}>
             {/* General Tab */}
             {activeTab === "general" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div>
                   <h3 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: 4 }}>{t("interfaceSettings")}</h3>
                   <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginBottom: 12 }}>
                     {t("interfaceSettingsDesc")}
                   </p>
                   
-                  <div style={{ padding: "4px 0", borderBottom: "1px solid var(--border)" }}>
-                    {renderSelect(t("appTheme"), config.theme, v => set("theme", v), [
-                      { value: "light", label: t("themeLight") },
-                      { value: "dark", label: t("themeDark") }
-                    ])}
-                  </div>
+                  {renderThemeSelector()}
 
-                  <div style={{ padding: "4px 0", borderBottom: "1px solid var(--border)" }}>
-                    {renderSelect(t("appLanguage"), config.language ?? "fr", v => set("language", v), [
-                      { value: "fr", label: t("langFr") },
-                      { value: "en", label: t("langEn") }
-                    ])}
-                  </div>
+                  {renderLanguageSelector()}
 
                   <div style={{ borderBottom: "1px solid var(--border)", paddingBottom: 8, paddingTop: 8 }}>
                     {renderToggle(t("expertMode"), config.expertMode, v => set("expertMode", v))}
@@ -369,9 +529,9 @@ export default function SettingsModal({
                   </div>
                 </div>
 
-                <div style={{ marginTop: 8 }}>
+                <div style={{ marginTop: 4 }}>
                   <h3 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: 4, color: "var(--danger)" }}>{t("discussionActions")}</h3>
-                  <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginBottom: 12 }}>
+                  <p style={{ fontSize: "0.78rem", color: "var(--text-secondary)", marginBottom: 10 }}>
                     {t("discussionActionsDesc")}
                   </p>
                   <button
@@ -404,7 +564,7 @@ export default function SettingsModal({
 
             {/* Audio & Model Tab */}
             {activeTab === "audio" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div>
                   <h3 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
                     <Volume2 size={16} />
@@ -414,19 +574,10 @@ export default function SettingsModal({
                     {t("ttsDesc")}
                   </p>
                   {renderToggle(t("ttsAuto"), config.ttsEnabled, v => set("ttsEnabled", v))}
-                  {config.ttsEnabled && (
-                    renderSelect(t("assistantVoice"), config.voiceType, v => set("voiceType", v), [
-                      { value: "lila",    label: t("voiceLila") },
-                      { value: "ethan",   label: t("voiceEthan") },
-                      { value: "female1", label: t("voiceFemale1") },
-                      { value: "male1",   label: t("voiceMale1") },
-                      { value: "female2", label: t("voiceFemale2") },
-                      { value: "male2",   label: t("voiceMale2") },
-                    ])
-                  )}
+                  {config.ttsEnabled && renderVoiceSelector()}
                 </div>
 
-                <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>
                   <h3 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
                     <Thermometer size={16} />
                     <span>{t("generationSettings")}</span>

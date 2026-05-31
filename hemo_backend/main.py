@@ -613,7 +613,6 @@ def check_premium_access(username: str, db: Session) -> None:
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest, db: Session = Depends(get_db)):
     """Standard text chat with conversation history."""
-    check_premium_access(req.username, db)
     logger.info(f"Chat: {req.message[:80]!r}")
     response = await call_medgemma(req.message, req.history)
     return {"response": response}
@@ -622,7 +621,6 @@ async def chat(req: ChatRequest, db: Session = Depends(get_db)):
 @app.get("/api/chat/stream")
 async def chat_stream(message: str, history_json: str = "[]", username: str = "", db: Session = Depends(get_db)):
     """SSE streaming endpoint."""
-    check_premium_access(username, db)
     try:
         history = json.loads(history_json)
     except Exception:
@@ -761,7 +759,8 @@ async def multimodal_unified(
       - history: updated conversation history
       - audio_b64: (optional) TTS audio if tts=true
     """
-    check_premium_access(username, db)
+    if image is not None or audio is not None:
+        check_premium_access(username, db)
     try:
         history: list[dict] = json.loads(history_json)
     except Exception:

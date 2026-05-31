@@ -5,12 +5,23 @@ import {
   Send, Mic, MicOff, Paperclip, RotateCcw, X, Zap, MessageCircle, Heart,
   PanelLeftClose, PanelLeftOpen, User
 } from "lucide-react";
-import Sidebar, { DEFAULT_CONFIG } from "@/components/Sidebar";
+import Sidebar from "@/components/Sidebar";
+import SettingsModal from "@/components/SettingsModal";
 import DrHemoAvatar from "@/components/DrHemoAvatar";
 import LandingPage from "@/components/LandingPage";
 import { useRouter } from "next/navigation";
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+
+const DEFAULT_CONFIG = {
+  ttsEnabled:    true,
+  voiceType:     "lila",
+  theme:         "dark",
+  temperature:   0.7,
+  maxTokens:     500,
+  streamMode:    true,
+  expertMode:    false,
+};
 
 function formatMessage(text) {
   return text
@@ -33,6 +44,8 @@ export default function UnifiedPage() {
   const [loggedUser, setLoggedUser] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [billingLoading, setBillingLoading] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsModalTab, setSettingsModalTab] = useState("general");
 
   const handleSubscribe = async () => {
     if (!loggedUser) return;
@@ -53,6 +66,32 @@ export default function UnifiedPage() {
     } finally {
       setBillingLoading(false);
     }
+  };
+
+  const handleManageBilling = async () => {
+    if (!loggedUser) return;
+    setBillingLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/billing/portal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loggedUser.username }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      alert("Erreur lors de la redirection vers le portail client Stripe.");
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const triggerUpgrade = () => {
+    setSettingsModalTab("billing");
+    setShowSettingsModal(true);
   };
 
   // Sidebar config (temperature, max tokens, TTS lang, streaming, lang, expert mode)
@@ -287,13 +326,15 @@ export default function UnifiedPage() {
       {loggedUser && (
         <Sidebar
           isOpen={isSidebarOpen}
-          config={config}
-          onConfigChange={setConfig}
           history={msgHistory}
           onClearHistory={clearChat}
           onLogout={handleLogout}
           loggedUser={loggedUser}
           onLogoClick={() => setShowLanding(true)}
+          onSettingsClick={() => {
+            setSettingsModalTab("general");
+            setShowSettingsModal(true);
+          }}
         />
       )}
       <audio ref={audioRef} style={{ display: "none" }} />
@@ -383,114 +424,20 @@ export default function UnifiedPage() {
             )}
 
 
-            {/* ── Chat Content or Premium Wall ── */}
-            {loggedUser.subscription_status !== "active" ? (
-              <div style={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "40px 20px",
-                maxWidth: "600px",
-                margin: "auto",
-                textAlign: "center",
-              }}>
-                <div style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: 24,
-                  background: "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: 24,
-                  boxShadow: "0 8px 24px rgba(139, 92, 246, 0.4)"
-                }}>
-                  <Zap size={32} color="white" />
-                </div>
-                <h2 style={{ fontSize: "2rem", fontWeight: 800, marginBottom: 12, background: "linear-gradient(135deg, #fff 0%, #a78bfa 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  Passez à Hemo Premium
-                </h2>
-                <p style={{ color: "var(--text-secondary)", fontSize: "1.05rem", lineHeight: 1.6, marginBottom: 32 }}>
-                  Débloquez toute la puissance de Hemo Lab. Obtenez des analyses médicales précises, des diagnostics assistés par l'IA et bien plus encore.
-                </p>
-
-                <div style={{
-                  width: "100%",
-                  background: "var(--sidebar-bg)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 20,
-                  padding: 24,
-                  textAlign: "left",
-                  marginBottom: 32,
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.15)"
-                }}>
-                  <h3 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: 16, color: "var(--text-primary)" }}>
-                    Fonctionnalités Premium incluses :
-                  </h3>
-                  <ul style={{ display: "flex", flexDirection: "column", gap: 12, padding: 0, margin: 0, listStyle: "none" }}>
-                    <li style={{ display: "flex", gap: 10, fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-                      <span style={{ color: "var(--accent)" }}>✓</span>
-                      <span><strong>Orchestrateur EARCP</strong> : Combinaison dynamique de modèles d'experts.</span>
-                    </li>
-                    <li style={{ display: "flex", gap: 10, fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-                      <span style={{ color: "var(--accent)" }}>✓</span>
-                      <span><strong>Modèle Médical MedGemma</strong> : Réponses hautement spécialisées de précision.</span>
-                    </li>
-                    <li style={{ display: "flex", gap: 10, fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-                      <span style={{ color: "var(--accent)" }}>✓</span>
-                      <span><strong>Vision par Ordinateur LLaVA</strong> : Analyse visuelle détaillée des images médicales.</span>
-                    </li>
-                    <li style={{ display: "flex", gap: 10, fontSize: "0.9rem", color: "var(--text-secondary)" }}>
-                      <span style={{ color: "var(--accent)" }}>✓</span>
-                      <span><strong>Synthèse & Transcription vocale</strong> : Mode conversationnel temps réel.</span>
-                    </li>
-                  </ul>
-                  <div style={{ marginTop: 24, borderTop: "1px solid var(--border)", paddingTop: 16, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                    <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Tarif unique</span>
-                    <div>
-                      <span style={{ fontSize: "1.8rem", fontWeight: 800, color: "white" }}>19.99 €</span>
-                      <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}> / mois</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleSubscribe}
-                  disabled={billingLoading}
-                  style={{
-                    width: "100%",
-                    padding: "16px",
-                    borderRadius: 12,
-                    border: "none",
-                    background: "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
-                    color: "white",
-                    fontSize: "1rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    boxShadow: "0 6px 20px rgba(139, 92, 246, 0.4)",
-                    transition: "transform 0.15s, box-shadow 0.15s",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8
-                  }}
-                  onMouseOver={e => {
-                    e.currentTarget.style.transform = "scale(1.02)";
-                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(139, 92, 246, 0.5)";
-                  }}
-                  onMouseOut={e => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(139, 92, 246, 0.4)";
-                  }}
-                >
-                  {billingLoading ? <div className="spinner" /> : "S'abonner maintenant 🌟"}
-                </button>
-              </div>
-            ) : (
-              <>
-                {/* ── Messages ── */}
+            {/* ── Settings Modal ── */}
+            <SettingsModal
+              isOpen={showSettingsModal}
+              onClose={() => setShowSettingsModal(false)}
+              config={config}
+              onConfigChange={setConfig}
+              loggedUser={loggedUser}
+              billingLoading={billingLoading}
+              handleSubscribe={handleSubscribe}
+              handleManageBilling={handleManageBilling}
+              onClearHistory={clearChat}
+              defaultTab={settingsModalTab}
+            />
+            {/* ── Messages ── */}
                 <div className="chat-messages">
                   {messages.map((msg, i) => (
                     <div key={i} className={`message-row ${msg.role === "assistant" ? "ai" : "user"}`}>
@@ -580,10 +527,33 @@ export default function UnifiedPage() {
                   )}
 
                   <div className="input-wrapper">
-                    <button className="input-icon-btn" title="Attach an image" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                    <button
+                      className="input-icon-btn"
+                      title="Attach an image"
+                      onClick={() => {
+                        if (loggedUser?.subscription_status !== "active") {
+                          triggerUpgrade();
+                        } else {
+                          fileInputRef.current?.click();
+                        }
+                      }}
+                      disabled={isLoading}
+                    >
                       <Paperclip size={17} />
                     </button>
-                    <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => pickImage(e.target.files[0])} />
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      onChange={e => {
+                        if (loggedUser?.subscription_status !== "active") {
+                          triggerUpgrade();
+                        } else {
+                          pickImage(e.target.files[0]);
+                        }
+                      }}
+                    />
 
                     <input
                       ref={inputRef}
@@ -594,9 +564,16 @@ export default function UnifiedPage() {
                       onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMultimodal()}
                       onPaste={e => {
                         const item = [...e.clipboardData.items].find(i => i.type.startsWith("image/"));
-                        if (item) { e.preventDefault(); pickImage(item.getAsFile()); }
+                        if (item) {
+                          e.preventDefault();
+                          if (loggedUser?.subscription_status !== "active") {
+                            triggerUpgrade();
+                          } else {
+                            pickImage(item.getAsFile());
+                          }
+                        }
                       }}
-                      placeholder={convMode ? "Conversation mode active..." : "Ask Hemo a question..."}
+                      placeholder={convMode ? "Conversation mode active..." : "Ask Hemo a question... "}
                       disabled={isLoading || convMode}
                     />
 
@@ -605,11 +582,15 @@ export default function UnifiedPage() {
                         className={`input-icon-btn ${isRecording && !convMode ? "recording" : ""}`}
                         title={isRecording && !convMode ? "Stop and send" : "Interaction Vocale"}
                         onClick={() => {
-                          if (isRecording && !convMode) {
-                            stopRecording();
+                          if (loggedUser?.subscription_status !== "active") {
+                            triggerUpgrade();
                           } else {
-                            setIsVoiceMode(true);
-                            startRecording(false);
+                            if (isRecording && !convMode) {
+                              stopRecording();
+                            } else {
+                              setIsVoiceMode(true);
+                              startRecording(false);
+                            }
                           }
                         }}
                         disabled={isLoading || isSpeaking || convMode}
@@ -620,7 +601,13 @@ export default function UnifiedPage() {
                       <button
                         className={`input-icon-btn ${convMode ? "conv-active" : ""}`}
                         title={convMode ? "Stop conversation" : "Continuous conversation mode"}
-                        onClick={toggleConvMode}
+                        onClick={() => {
+                          if (loggedUser?.subscription_status !== "active") {
+                            triggerUpgrade();
+                          } else {
+                            toggleConvMode();
+                          }
+                        }}
                         disabled={isLoading && !convMode}
                       >
                         <MessageCircle size={17} />
@@ -645,8 +632,6 @@ export default function UnifiedPage() {
                 </div>
               </>
             )}
-          </>
-        )}
       </main>
     </div>
   );

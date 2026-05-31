@@ -418,6 +418,7 @@ export default function UnifiedPage() {
       <main className="main-content">
         {(!loggedUser || showLanding) ? (
           <LandingPage 
+            config={config}
             onLogin={() => router.push("/auth")} 
             onSignup={() => router.push("/auth")}
             onClose={() => setShowLanding(false)}

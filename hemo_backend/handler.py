@@ -602,11 +602,11 @@ async def _dispatch(job_input: dict) -> dict:
     return await handler_fn(job_input)
 
 
-def handler(job: dict) -> dict:
-    """RunPod synchronous entrypoint."""
+async def handler(job: dict) -> dict:
+    """RunPod asynchronous entrypoint."""
     job_input = job.get("input", {})
     try:
-        return asyncio.run(_dispatch(job_input))
+        return await _dispatch(job_input)
     except Exception as e:
         logger.error(f"Handler error: {e}", exc_info=True)
         return {"error": str(e)}

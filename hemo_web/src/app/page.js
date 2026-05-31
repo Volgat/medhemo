@@ -70,7 +70,7 @@ const DEFAULT_CONFIG = {
   ttsEnabled:    true,
   voiceType:     "lila",
   theme:         "dark",
-  language:      "fr",
+  language:      "en",
   temperature:   0.7,
   maxTokens:     500,
   streamMode:    true,
@@ -88,9 +88,7 @@ function formatMessage(text) {
 export default function UnifiedPage() {
   const router = useRouter();
   const [showLanding, setShowLanding] = useState(true);
-  const [messages, setMessages]   = useState([
-    { role: "assistant", content: "Bonjour ! Je suis **Hemo**, votre assistant santé personnel. Comment puis-je vous aider aujourd'hui ?" },
-  ]);
+  const [messages, setMessages]   = useState([]);
   const [input, setInput]           = useState("");
   const [isLoading, setIsLoading]   = useState(false);
   const [history, setHistory]       = useState([]);      // API history (role/content pairs)
@@ -377,7 +375,7 @@ export default function UnifiedPage() {
   };
 
   const clearChat = () => {
-    setMessages([{ role: "assistant", content: t("resetMsg") }]);
+    setMessages([]);
     setHistory([]);
     setMsgHistory([]);
   };

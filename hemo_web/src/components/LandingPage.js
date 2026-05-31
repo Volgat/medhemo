@@ -2,13 +2,12 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, MessageCircle, X } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import DrHemoAvatar from "./DrHemoAvatar";
 
 const TRANSLATIONS = {
   fr: {
     title: "Votre compagnon santé au quotidien",
-    subtitle: "Un petit assistant simple et bienveillant",
     description: "MedHemo vous aide à comprendre vos symptômes et répond à vos questions de bien-être. Il s'agit d'un simple outil de soutien pour vous accompagner au quotidien : il ne remplace en aucun cas un médecin ou un avis médical professionnel.",
     btnGetStarted: "Commencer avec Hemo",
     textUnlock: "Inscrivez-vous pour échanger avec votre assistant personnalisé",
@@ -16,13 +15,9 @@ const TRANSLATIONS = {
     loginHere: "Se connecter ici",
     signup: "S'inscrire",
     login: "Se connecter",
-    assistantTitle: "Assistant MedHemo",
-    assistantHelp: "Comment puis-je vous aider ?",
-    typeMessage: "Discuter avec Hemo...",
   },
   en: {
     title: "Your daily health companion",
-    subtitle: "A simple and caring little assistant",
     description: "MedHemo helps you understand your symptoms and answers your well-being questions. It is a simple support tool to accompany you daily: it does not replace a doctor or professional medical advice.",
     btnGetStarted: "Get started with Hemo",
     textUnlock: "Sign up to chat with your personalized assistant",
@@ -30,15 +25,12 @@ const TRANSLATIONS = {
     loginHere: "Login here",
     signup: "Sign up",
     login: "Log in",
-    assistantTitle: "MedHemo Assistant",
-    assistantHelp: "How can I help you?",
-    typeMessage: "Chat with Hemo...",
   }
 };
 
 export default function LandingPage({ config = {}, onLogin, onSignup, onClose }) {
-  const lang = config.language || "fr";
-  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS["fr"][key];
+  const lang = config.language || "en";
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS["en"][key];
 
   return (
     <div className="landing-page" style={{
@@ -126,7 +118,7 @@ export default function LandingPage({ config = {}, onLogin, onSignup, onClose })
       <section style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '40px 40px 100px',
+        padding: '60px 40px 100px',
         textAlign: 'center',
         display: 'flex',
         flexDirection: 'column',
@@ -182,26 +174,10 @@ export default function LandingPage({ config = {}, onLogin, onSignup, onClose })
           </motion.div>
         </motion.div>
 
-        <motion.span
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          style={{
-            fontSize: '0.95rem',
-            color: '#4BBE4F',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.15em',
-            marginBottom: '12px'
-          }}
-        >
-          {t("subtitle")}
-        </motion.span>
-
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.1 }}
           style={{
             fontSize: '3rem',
             fontWeight: 800,
@@ -218,7 +194,7 @@ export default function LandingPage({ config = {}, onLogin, onSignup, onClose })
         <motion.p 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.2 }}
           style={{
             fontSize: '1.05rem',
             color: '#b0bbc0',
@@ -234,7 +210,7 @@ export default function LandingPage({ config = {}, onLogin, onSignup, onClose })
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.3 }}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}
         >
           <button
@@ -275,82 +251,6 @@ export default function LandingPage({ config = {}, onLogin, onSignup, onClose })
           </div>
         </motion.div>
       </section>
-
-      {/* Floating Chat Bubble Widget */}
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 1.2, type: 'spring' }}
-        style={{
-          position: 'fixed',
-          bottom: '40px',
-          right: '40px',
-          zIndex: 100,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: '12px'
-        }}
-      >
-        {/* Floating Tooltip */}
-        <div style={{
-          background: '#161d1a',
-          padding: '20px',
-          borderRadius: '16px',
-          boxShadow: '0 12px 36px rgba(0,0,0,0.4)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          width: '320px',
-          position: 'relative',
-          color: '#ffffff'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 750, fontSize: '0.9rem', color: '#4BBE4F' }}>
-               <div style={{ width: 24, height: 24, background: 'linear-gradient(135deg, #4BBE4F 0%, #10a37f 100%)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                 <span style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>H</span>
-               </div>
-               {t("assistantTitle")}
-            </div>
-            <X size={16} color="#888" style={{ cursor: 'pointer' }} onClick={onClose} />
-          </div>
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.02)', 
-            padding: '12px', 
-            borderRadius: '10px', 
-            color: '#b0bbc0', 
-            fontSize: '0.88rem',
-            marginBottom: '10px',
-            border: '1px solid rgba(75, 190, 79, 0.1)'
-          }}>
-            {t("assistantHelp")}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#808f89', fontSize: '0.8rem' }}>
-            <MessageCircle size={14} color="#4BBE4F" />
-             {t("typeMessage")}
-          </div>
-        </div>
-
-        {/* Main Circle Icon Trigger */}
-        <div 
-          onClick={onClose}
-          style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '32px',
-            background: 'linear-gradient(135deg, #4BBE4F 0%, #10a37f 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 8px 24px rgba(75, 190, 79, 0.3)',
-            color: 'white',
-            transition: 'transform 0.2s'
-          }}
-          onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
-          onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <MessageCircle size={28} />
-        </div>
-      </motion.div>
     </div>
   );
 }

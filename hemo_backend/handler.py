@@ -112,9 +112,8 @@ def _get_db_session():
         db.execute(text("SELECT 1"))
         return db
     except Exception as e:
-        import traceback
         logger.error(f"Database session creation failed: {e}")
-        raise RuntimeError(f"Database session creation failed: {e}\n{traceback.format_exc()}")
+        raise RuntimeError("The database is currently inaccessible. Please try again shortly.")
 
 
 def _format_error(e: Exception) -> str:

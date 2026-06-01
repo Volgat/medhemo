@@ -45,7 +45,7 @@ const TRANSLATIONS = {
     currentSubscription: "Votre abonnement actuel",
     statusActive: "Actif",
     statusStandard: "Standard",
-    subPremium: "Hemo Premium 🌟",
+    subPremium: "Hemo Premium",
     subStandard: "Hemo Standard",
     unlockPremium: "Débloquez les fonctionnalités Premium",
     featureVision: "Vision médicale : Analyse d'images comme les radiographies et les ordonnances",
@@ -54,8 +54,11 @@ const TRANSLATIONS = {
     premiumPricing: "Tarification Premium",
     cancelAnytime: "Annulation simple à tout moment",
     perMonth: "/mois",
-    becomePremium: "Devenir Premium 🚀",
+    becomePremium: "Devenir Premium",
     manageBilling: "Gérer la facturation Stripe",
+    freeQueries: "Requêtes médicales standard",
+    freeSpeed: "Vitesse de réponse normale",
+    freeDiagnostic: "Explications de diagnostic de base",
     premiumDescription: "Merci pour votre confiance ! Vous disposez actuellement d'un accès illimité à toutes nos fonctionnalités Premium, y compris la vision médicale, la synthèse vocale et la transcription vocale.",
     loading: "Chargement...",
   },
@@ -97,7 +100,7 @@ const TRANSLATIONS = {
     currentSubscription: "Your Current Subscription",
     statusActive: "Active",
     statusStandard: "Standard",
-    subPremium: "Hemo Premium 🌟",
+    subPremium: "Hemo Premium",
     subStandard: "Hemo Standard",
     unlockPremium: "Unlock Premium Features",
     featureVision: "Medical Vision: Analysis of images such as X-rays and prescriptions",
@@ -106,8 +109,11 @@ const TRANSLATIONS = {
     premiumPricing: "Premium Pricing",
     cancelAnytime: "Cancel easily at any time",
     perMonth: "/month",
-    becomePremium: "Become Premium 🚀",
+    becomePremium: "Become Premium",
     manageBilling: "Manage Stripe Billing",
+    freeQueries: "Standard medical queries",
+    freeSpeed: "Standard response speed",
+    freeDiagnostic: "Core diagnostic explanations",
     premiumDescription: "Thank you for your trust! You currently have unlimited access to all our Premium features, including medical vision, text-to-speech, and voice transcription.",
     loading: "Loading...",
   },
@@ -149,7 +155,7 @@ const TRANSLATIONS = {
     currentSubscription: "Tu Suscripción Actual",
     statusActive: "Activa",
     statusStandard: "Estándar",
-    subPremium: "Hemo Premium 🌟",
+    subPremium: "Hemo Premium",
     subStandard: "Hemo Estándar",
     unlockPremium: "Desbloquear Funciones Premium",
     featureVision: "Visión médica: Análisis de imágenes como radiografías y recetas",
@@ -158,8 +164,11 @@ const TRANSLATIONS = {
     premiumPricing: "Precios Premium",
     cancelAnytime: "Cancela fácilmente en cualquier momento",
     perMonth: "/mes",
-    becomePremium: "Convertirse en Premium 🚀",
+    becomePremium: "Convertirse en Premium",
     manageBilling: "Administrar Facturación de Stripe",
+    freeQueries: "Consultas médicas estándar",
+    freeSpeed: "Velocidad de respuesta estándar",
+    freeDiagnostic: "Explicaciones de diagnóstico básicas",
     premiumDescription: "¡Gracias por su confianza! Actualmente tiene acceso ilimitado a todas nuestras funciones Premium, incluida la visión médica, el texto a voz y la transcripción de voz.",
     loading: "Cargando...",
   }
@@ -448,7 +457,7 @@ export default function SettingsModal({
         borderRadius: 20,
         maxWidth: "680px",
         width: "100%",
-        height: "500px",
+        height: "530px",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -662,143 +671,167 @@ export default function SettingsModal({
 
             {/* Subscription & Pricing Tab */}
             {activeTab === "billing" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--input-bg)", padding: "12px 16px", borderRadius: 12, border: "1px solid var(--border)" }}>
-                  <div>
-                    <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>{t("currentSubscription")}</div>
-                    <div style={{ fontSize: "1rem", fontWeight: 700, marginTop: 2 }}>
-                      {loggedUser?.subscription_status === "active" ? t("subPremium") : t("subStandard")}
-                    </div>
-                  </div>
-                  {loggedUser?.subscription_status === "active" ? (
-                    <span style={{
-                      fontSize: "0.72rem",
-                      background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                      color: "#1e1b4b",
-                      padding: "4px 10px",
-                      borderRadius: 20,
-                      fontWeight: 800,
-                      boxShadow: "0 0 10px rgba(245, 158, 11, 0.5)"
-                    }}>{t("statusActive")}</span>
-                  ) : (
-                    <span style={{
-                      fontSize: "0.72rem",
-                      background: "var(--border)",
-                      color: "var(--text-secondary)",
-                      padding: "4px 10px",
-                      borderRadius: 20,
-                      fontWeight: 600
-                    }}>{t("statusStandard")}</span>
-                  )}
-                </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%", paddingBottom: 4 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, flex: 1 }}>
+                  
+                  {/* Standard/Free Card */}
+                  <div style={{
+                    background: "rgba(255, 255, 255, 0.02)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 14,
+                    padding: 18,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between"
+                  }}>
+                    <div>
+                      <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Standard</div>
+                      <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "white", marginTop: 4, marginBottom: 8 }}>Hemo Standard</h3>
+                      
+                      <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "white", marginBottom: 16 }}>
+                        $0<span style={{ fontSize: "0.75rem", fontWeight: 400, color: "var(--text-muted)" }}>/month</span>
+                      </div>
 
-                {loggedUser?.subscription_status !== "active" ? (
-                  <>
-                    <div style={{
-                      background: "rgba(16, 163, 127, 0.08)",
-                      border: "1px solid rgba(16, 163, 127, 0.2)",
-                      borderRadius: 12,
-                      padding: 16,
-                    }}>
-                      <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "white", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-                        <Zap size={14} style={{ color: "var(--accent)" }} />
-                        <span>{t("unlockPremium")}</span>
-                      </h4>
-                      <ul style={{ display: "flex", flexDirection: "column", gap: 8, padding: 0, margin: 0, listStyle: "none" }}>
-                        <li style={{ display: "flex", gap: 8, fontSize: "0.78rem", color: "var(--text-secondary)" }}>
-                          <span style={{ color: "var(--accent)" }}>✓</span>
+                      <ul style={{ display: "flex", flexDirection: "column", gap: 10, padding: 0, margin: 0, listStyle: "none" }}>
+                        <li style={{ display: "flex", gap: 8, fontSize: "0.75rem", color: "var(--text-secondary)", alignItems: "flex-start" }}>
+                          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>✓</span>
+                          <span>{t("freeQueries")}</span>
+                        </li>
+                        <li style={{ display: "flex", gap: 8, fontSize: "0.75rem", color: "var(--text-secondary)", alignItems: "flex-start" }}>
+                          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>✓</span>
+                          <span>{t("freeDiagnostic")}</span>
+                        </li>
+                        <li style={{ display: "flex", gap: 8, fontSize: "0.75rem", color: "var(--text-secondary)", alignItems: "flex-start" }}>
+                          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>✓</span>
+                          <span>{t("freeSpeed")}</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <button
+                      disabled
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: 8,
+                        border: "1px solid var(--border)",
+                        background: "transparent",
+                        color: "var(--text-muted)",
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                        marginTop: 16,
+                        cursor: "default"
+                      }}
+                    >
+                      {loggedUser?.subscription_status !== "active" ? t("statusActive") : t("statusStandard")}
+                    </button>
+                  </div>
+
+                  {/* Premium Card */}
+                  <div style={{
+                    background: "rgba(16, 163, 127, 0.02)",
+                    border: loggedUser?.subscription_status === "active" ? "2px solid #10a37f" : "1px solid rgba(16, 163, 127, 0.25)",
+                    borderRadius: 14,
+                    padding: 18,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    position: "relative",
+                    boxShadow: loggedUser?.subscription_status === "active" ? "0 4px 20px rgba(16, 163, 127, 0.1)" : "none"
+                  }}>
+                    {loggedUser?.subscription_status === "active" && (
+                      <span style={{
+                        position: "absolute",
+                        top: -9,
+                        right: 16,
+                        background: "#10a37f",
+                        color: "white",
+                        fontSize: "0.58rem",
+                        fontWeight: 800,
+                        padding: "2px 8px",
+                        borderRadius: 10,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em"
+                      }}>
+                        {t("statusActive")}
+                      </span>
+                    )}
+                    <div>
+                      <div style={{ fontSize: "0.68rem", color: "var(--accent)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.05em" }}>Plus</div>
+                      <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "white", marginTop: 4, marginBottom: 8 }}>Hemo Premium</h3>
+                      
+                      <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "white", marginBottom: 16 }}>
+                        $8.00<span style={{ fontSize: "0.75rem", fontWeight: 400, color: "var(--text-muted)" }}>/month</span>
+                      </div>
+
+                      <ul style={{ display: "flex", flexDirection: "column", gap: 10, padding: 0, margin: 0, listStyle: "none" }}>
+                        <li style={{ display: "flex", gap: 8, fontSize: "0.75rem", color: "var(--text-secondary)", alignItems: "flex-start" }}>
+                          <span style={{ color: "var(--accent)", fontSize: "0.8rem", fontWeight: "bold" }}>✓</span>
                           <span>{t("featureVision")}</span>
                         </li>
-                        <li style={{ display: "flex", gap: 8, fontSize: "0.78rem", color: "var(--text-secondary)" }}>
-                          <span style={{ color: "var(--accent)" }}>✓</span>
+                        <li style={{ display: "flex", gap: 8, fontSize: "0.75rem", color: "var(--text-secondary)", alignItems: "flex-start" }}>
+                          <span style={{ color: "var(--accent)", fontSize: "0.8rem", fontWeight: "bold" }}>✓</span>
                           <span>{t("featureVoice")}</span>
                         </li>
-                        <li style={{ display: "flex", gap: 8, fontSize: "0.78rem", color: "var(--text-secondary)" }}>
-                          <span style={{ color: "var(--accent)" }}>✓</span>
+                        <li style={{ display: "flex", gap: 8, fontSize: "0.75rem", color: "var(--text-secondary)", alignItems: "flex-start" }}>
+                          <span style={{ color: "var(--accent)", fontSize: "0.8rem", fontWeight: "bold" }}>✓</span>
                           <span>{t("featurePdf")}</span>
                         </li>
                       </ul>
                     </div>
 
-                    <div style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "8px 0",
-                      marginTop: 8
-                    }}>
-                      <div>
-                        <div style={{ fontSize: "0.85rem", fontWeight: 600 }}>{t("premiumPricing")}</div>
-                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{t("cancelAnytime")}</div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <span style={{ fontSize: "1.4rem", fontWeight: 800, color: "white" }}>8.00 $</span>
-                        <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{t("perMonth")}</span>
-                      </div>
-                    </div>
+                    {loggedUser?.subscription_status !== "active" ? (
+                      <button
+                        onClick={handleSubscribe}
+                        disabled={billingLoading}
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: 8,
+                          border: "none",
+                          background: "var(--accent)",
+                          color: "white",
+                          fontSize: "0.78rem",
+                          fontWeight: 700,
+                          cursor: billingLoading ? "default" : "pointer",
+                          transition: "all 0.2s",
+                          marginTop: 16,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6
+                        }}
+                      >
+                        {billingLoading ? <Loader2 size={14} className="spinner" /> : t("becomePremium")}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleManageBilling}
+                        disabled={billingLoading}
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: 8,
+                          border: "1px solid var(--border)",
+                          background: "var(--input-bg)",
+                          color: "var(--text-primary)",
+                          fontSize: "0.78rem",
+                          fontWeight: 600,
+                          cursor: billingLoading ? "default" : "pointer",
+                          transition: "all 0.2s",
+                          marginTop: 16,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6
+                        }}
+                      >
+                        {billingLoading ? <Loader2 size={14} className="spinner" /> : t("manageBilling")}
+                      </button>
+                    )}
+                  </div>
 
-                    <button
-                      onClick={handleSubscribe}
-                      disabled={billingLoading}
-                      style={{
-                        width: "100%",
-                        padding: "12px",
-                        borderRadius: 10,
-                        border: "none",
-                        background: "linear-gradient(135deg, #10a37f 0%, #4BBE4F 100%)",
-                        color: "white",
-                        fontSize: "0.9rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        boxShadow: "0 4px 14px rgba(16, 163, 127, 0.3)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
-                        marginTop: 8
-                      }}
-                    >
-                      {billingLoading ? <Loader2 size={16} className="spinner" /> : t("becomePremium")}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <div style={{
-                      background: "rgba(16, 163, 127, 0.08)",
-                      border: "1px solid rgba(16, 163, 127, 0.2)",
-                      borderRadius: 12,
-                      padding: 16,
-                      fontSize: "0.8rem",
-                      lineHeight: 1.5,
-                      color: "var(--text-secondary)"
-                    }}>
-                      {t("premiumDescription")}
-                    </div>
-
-                    <button
-                      onClick={handleManageBilling}
-                      disabled={billingLoading}
-                      style={{
-                        width: "100%",
-                        padding: "12px",
-                        borderRadius: 10,
-                        border: "1px solid var(--border)",
-                        background: "var(--input-bg)",
-                        color: "var(--text-primary)",
-                        fontSize: "0.9rem",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 8,
-                        marginTop: "auto"
-                      }}
-                    >
-                      {billingLoading ? <Loader2 size={16} className="spinner" /> : t("manageBilling")}
-                    </button>
-                  </>
-                )}
+                </div>
               </div>
             )}
           </div>

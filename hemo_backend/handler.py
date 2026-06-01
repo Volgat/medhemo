@@ -434,6 +434,55 @@ async def handle_auth_status(job_input: dict) -> dict:
         return {"detail": _format_error(e)}
 
 
+async def handle_auth_reset_request(job_input: dict) -> dict:
+    email = job_input.get("email", "").strip()
+    if not email:
+        return {"detail": "Email is required"}
+    try:
+        import random
+        db = _get_db_session()
+        user = db.query(User).filter(func.lower(User.email) == func.lower(email)).first()
+        if not user:
+            return {"detail": "User with this email does not exist."}
+        
+        # Generate 6-digit code
+        reset_code = f"{random.randint(100000, 999999)}"
+        user.reset_code = reset_code
+        db.commit()
+        
+        return {
+            "username": user.username,
+            "resetCode": reset_code
+        }
+    except Exception as e:
+        logger.error(f"Reset request error: {e}")
+        return {"detail": _format_error(e)}
+
+
+async def handle_auth_reset_password(job_input: dict) -> dict:
+    username = job_input.get("username", "").strip()
+    reset_code = job_input.get("resetCode", "").strip()
+    new_password = job_input.get("newPassword", "").strip()
+    if not username or not reset_code or not new_password:
+        return {"detail": "Username, reset code, and new password are required."}
+    try:
+        db = _get_db_session()
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            return {"detail": "User not found."}
+        
+        if not user.reset_code or user.reset_code != reset_code:
+            return {"detail": "Invalid or expired recovery code."}
+        
+        user.hashed_password = hash_password(new_password)
+        user.reset_code = None
+        db.commit()
+        return {"message": "Success"}
+    except Exception as e:
+        logger.error(f"Reset password error: {e}")
+        return {"detail": _format_error(e)}
+
+
 # ── Billing handlers ──────────────────────────────────────────────────────────
 
 async def handle_billing_checkout(job_input: dict) -> dict:
@@ -607,6 +656,8 @@ ACTIONS = {
     "auth_signup":                     handle_auth_signup,
     "auth_login":                      handle_auth_login,
     "auth_status":                     handle_auth_status,
+    "auth_reset_request":              handle_auth_reset_request,
+    "auth_reset_password":             handle_auth_reset_password,
     "billing_create-checkout-session": handle_billing_checkout,
     "billing_portal":                  handle_billing_portal,
     "track_message":                   handle_track_message,

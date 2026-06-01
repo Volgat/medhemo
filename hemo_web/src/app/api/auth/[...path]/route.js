@@ -170,6 +170,115 @@ export async function POST(request, { params }) {
       return Response.json(output);
     }
 
+    // ── RESET REQUEST ────────────────────────────────────────────────────────
+    if (action === "reset-request") {
+      const { email } = body;
+      if (!email) {
+        return Response.json({ detail: "Email is required." }, { status: 400 });
+      }
+
+      // Try direct Supabase first
+      if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+        try {
+          const users = await supabaseQuery(
+            "users",
+            "GET",
+            null,
+            `?email=eq.${encodeURIComponent(email)}&select=id,username`
+          );
+
+          if (!users || users.length === 0) {
+            return Response.json({ detail: "User with this email does not exist." }, { status: 404 });
+          }
+
+          const user = users[0];
+          // Generate a 6-digit random code
+          const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+          // Save the code to users table
+          await supabaseQuery(
+            "users",
+            "PATCH",
+            { reset_code: resetCode },
+            `?id=eq.${user.id}`
+          );
+
+          return Response.json({
+            username: user.username,
+            resetCode: resetCode,
+          });
+        } catch (supaErr) {
+          console.error("[auth/reset-request] Supabase error, falling back to RunPod:", supaErr.message);
+          // Fall through to RunPod fallback
+        }
+      }
+
+      // Fallback to RunPod
+      if (!RUNPOD_API_KEY) {
+        return Response.json({ detail: "Server misconfiguration — no DB or RunPod configured." }, { status: 500 });
+      }
+      const output = await callRunPod({ action: "auth_reset_request", ...body });
+      if (output?.error || output?.detail) {
+        return Response.json(output, { status: 400 });
+      }
+      return Response.json(output);
+    }
+
+    // ── RESET PASSWORD ───────────────────────────────────────────────────────
+    if (action === "reset-password") {
+      const { username, resetCode, newPassword } = body;
+      if (!username || !resetCode || !newPassword) {
+        return Response.json({ detail: "Username, reset code and new password are required." }, { status: 400 });
+      }
+
+      // Try direct Supabase first
+      if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+        try {
+          const users = await supabaseQuery(
+            "users",
+            "GET",
+            null,
+            `?username=eq.${encodeURIComponent(username)}&select=id,reset_code`
+          );
+
+          if (!users || users.length === 0) {
+            return Response.json({ detail: "User not found." }, { status: 404 });
+          }
+
+          const user = users[0];
+          if (!user.reset_code || user.reset_code !== resetCode) {
+            return Response.json({ detail: "Invalid or expired recovery code." }, { status: 400 });
+          }
+
+          // Update password and clear reset code
+          await supabaseQuery(
+            "users",
+            "PATCH",
+            {
+              hashed_password: hashPassword(newPassword),
+              reset_code: null,
+            },
+            `?id=eq.${user.id}`
+          );
+
+          return Response.json({ message: "Success" });
+        } catch (supaErr) {
+          console.error("[auth/reset-password] Supabase error, falling back to RunPod:", supaErr.message);
+          // Fall through to RunPod fallback
+        }
+      }
+
+      // Fallback to RunPod
+      if (!RUNPOD_API_KEY) {
+        return Response.json({ detail: "Server misconfiguration — no DB or RunPod configured." }, { status: 500 });
+      }
+      const output = await callRunPod({ action: "auth_reset_password", ...body });
+      if (output?.error || output?.detail) {
+        return Response.json(output, { status: 400 });
+      }
+      return Response.json(output);
+    }
+
     return Response.json({ detail: "Unknown action" }, { status: 400 });
 
   } catch (err) {

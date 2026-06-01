@@ -29,6 +29,7 @@ class User(Base):
     stripe_customer_id     = Column(String, unique=True, index=True, nullable=True)
     stripe_subscription_id = Column(String, nullable=True)
     subscription_status    = Column(String, default="inactive")
+    reset_code             = Column(String, nullable=True)
 
     # ── Metrics columns ──────────────────────────────────────────────────────
     last_seen              = Column(DateTime, nullable=True)    # last activity timestamp
@@ -50,6 +51,22 @@ class MessageLog(Base):
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    try:
+        from sqlalchemy import text
+        db = SessionLocal()
+        # Add reset_code to users table if not exists
+        if DATABASE_URL.startswith("sqlite"):
+            try:
+                db.execute(text("SELECT reset_code FROM users LIMIT 1"))
+            except Exception:
+                db.execute(text("ALTER TABLE users ADD COLUMN reset_code VARCHAR"))
+                db.commit()
+        else:
+            db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_code VARCHAR"))
+            db.commit()
+        db.close()
+    except Exception as e:
+        print(f"Migration error: {e}")
 
 def get_db():
     db = SessionLocal()

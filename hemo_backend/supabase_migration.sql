@@ -17,8 +17,12 @@ CREATE TABLE IF NOT EXISTS users (
     last_seen              TIMESTAMP WITH TIME ZONE,
     total_messages         INTEGER DEFAULT 0,
     country                VARCHAR(2),
-    plan                   VARCHAR DEFAULT 'free'
+    plan                   VARCHAR DEFAULT 'free',
+    reset_code             VARCHAR
 );
+
+-- Migration for existing databases
+ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_code VARCHAR;
 
 -- Table des logs de messages (analytics)
 CREATE TABLE IF NOT EXISTS message_logs (

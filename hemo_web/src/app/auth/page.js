@@ -2,54 +2,94 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { User, Mail, Lock, ArrowRight, Loader2, Key } from "lucide-react";
 import DrHemoAvatar from "@/components/DrHemoAvatar";
 
 export default function AuthPage() {
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true);
+  const [authState, setAuthState] = useState("login"); // "login", "signup", "forgot", "reset"
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
+    resetCode: "",
+    newPassword: "",
   });
-
-  const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
+    let endpoint = "";
+    let payload = {};
+
+    if (authState === "login") {
+      endpoint = "/api/auth/login";
+      payload = { username: formData.username, password: formData.password };
+    } else if (authState === "signup") {
+      endpoint = "/api/auth/signup";
+      payload = { username: formData.username, email: formData.email, password: formData.password };
+    } else if (authState === "forgot") {
+      endpoint = "/api/auth/reset-request";
+      payload = { email: formData.email };
+    } else if (authState === "reset") {
+      endpoint = "/api/auth/reset-password";
+      payload = { username: formData.username, resetCode: formData.resetCode, newPassword: formData.newPassword };
+    }
     
     try {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.detail || "An error occurred");
+        throw new Error(data.detail || data.error || "An error occurred");
       }
 
-      // Success - Save to localStorage (simple auth for now)
-      localStorage.setItem("hemo_user", JSON.stringify({
-        username: data.username,
-        token: data.token,
-        subscription_status: data.subscription_status || "inactive"
-      }));
-
-      router.push("/");
+      if (authState === "forgot") {
+        setFormData(prev => ({ ...prev, username: data.username }));
+        alert(`A recovery code has been generated. For testing/demo purposes, the code is: ${data.resetCode}`);
+        setAuthState("reset");
+      } else if (authState === "reset") {
+        alert("Password updated successfully! Please log in.");
+        setAuthState("login");
+      } else {
+        localStorage.setItem("hemo_user", JSON.stringify({
+          username: data.username,
+          token: data.token,
+          subscription_status: data.subscription_status || "inactive"
+        }));
+        router.push("/");
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getTitle = () => {
+    switch (authState) {
+      case "signup": return "Create an account";
+      case "forgot": return "Reset password";
+      case "reset":  return "Set new password";
+      default:       return "Welcome back!";
+    }
+  };
+
+  const getDescription = () => {
+    switch (authState) {
+      case "signup": return "Join Hemo for personalized health tracking.";
+      case "forgot": return "Enter your email to receive a recovery code.";
+      case "reset":  return "Enter the recovery code and your new password.";
+      default:       return "Log in to reconnect with Hemo.";
     }
   };
 
@@ -79,12 +119,10 @@ export default function AuthPage() {
         </div>
 
         <h1 style={{ fontSize: '1.5rem', marginBottom: '8px', color: 'var(--text-primary)' }}>
-          {isLogin ? "Welcome back!" : "Create an account"}
+          {getTitle()}
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '32px', textAlign: 'center' }}>
-          {isLogin 
-            ? "Log in to reconnect with Hemo." 
-            : "Join Hemo for personalized health tracking."}
+          {getDescription()}
         </p>
 
         {error && (
@@ -103,7 +141,7 @@ export default function AuthPage() {
         )}
 
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-          {!isLogin && (
+          {authState === "signup" && (
             <div className="input-group" style={{ marginBottom: '16px' }}>
               <div style={{ position: 'relative' }}>
                 <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -126,47 +164,161 @@ export default function AuthPage() {
             </div>
           )}
 
-          <div className="input-group" style={{ marginBottom: '16px' }}>
-            <div style={{ position: 'relative' }}>
-              <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="text"
-                placeholder="Username"
-                required
-                value={formData.username}
-                onChange={(e) => setFormData({...formData, username: e.target.value})}
-                style={{
-                  width: '100%',
-                  padding: '12px 12px 12px 40px',
-                  borderRadius: '12px',
-                  background: 'var(--input-bg)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-primary)'
-                }}
-              />
+          {authState === "forgot" && (
+            <div className="input-group" style={{ marginBottom: '24px' }}>
+              <div style={{ position: 'relative' }}>
+                <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '12px 12px 12px 40px',
+                    borderRadius: '12px',
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="input-group" style={{ marginBottom: '24px' }}>
-            <div style={{ position: 'relative' }}>
-              <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
-                type="password"
-                placeholder="Password"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                style={{
-                  width: '100%',
-                  padding: '12px 12px 12px 40px',
-                  borderRadius: '12px',
-                  background: 'var(--input-bg)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-primary)'
-                }}
-              />
+          {(authState === "login" || authState === "signup") && (
+            <div className="input-group" style={{ marginBottom: '16px' }}>
+              <div style={{ position: 'relative' }}>
+                <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="Username"
+                  required
+                  value={formData.username}
+                  onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '12px 12px 12px 40px',
+                    borderRadius: '12px',
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {authState === "login" && (
+            <div className="input-group" style={{ marginBottom: '4px' }}>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '12px 12px 12px 40px',
+                    borderRadius: '12px',
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {authState === "login" && (
+            <div style={{ textAlign: 'right', marginBottom: '20px', marginTop: '6px' }}>
+              <button
+                type="button"
+                onClick={() => setAuthState("forgot")}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--accent)',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
+
+          {authState === "signup" && (
+            <div className="input-group" style={{ marginBottom: '24px' }}>
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '12px 12px 12px 40px',
+                    borderRadius: '12px',
+                    background: 'var(--input-bg)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {authState === "reset" && (
+            <>
+              <div className="input-group" style={{ marginBottom: '16px' }}>
+                <div style={{ position: 'relative' }}>
+                  <Key size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="text"
+                    placeholder="Recovery Code"
+                    required
+                    value={formData.resetCode}
+                    onChange={(e) => setFormData({...formData, resetCode: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '12px 12px 12px 40px',
+                      borderRadius: '12px',
+                      background: 'var(--input-bg)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="input-group" style={{ marginBottom: '24px' }}>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="password"
+                    placeholder="New Password"
+                    required
+                    value={formData.newPassword}
+                    onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '12px 12px 12px 40px',
+                      borderRadius: '12px',
+                      background: 'var(--input-bg)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           <button
             type="submit"
@@ -188,7 +340,10 @@ export default function AuthPage() {
           >
             {isLoading ? <Loader2 size={20} className="spinner" /> : (
               <>
-                {isLogin ? "Login" : "Sign Up"}
+                {authState === "login" && "Login"}
+                {authState === "signup" && "Sign Up"}
+                {authState === "forgot" && "Send Recovery Code"}
+                {authState === "reset" && "Reset Password"}
                 <ArrowRight size={18} />
               </>
             )}
@@ -196,7 +351,11 @@ export default function AuthPage() {
         </form>
 
         <button
-          onClick={() => setIsLogin(!isLogin)}
+          onClick={() => {
+            setError("");
+            if (authState === "login") setAuthState("signup");
+            else setAuthState("login");
+          }}
           style={{
             marginTop: '24px',
             background: 'none',
@@ -206,7 +365,9 @@ export default function AuthPage() {
             cursor: 'pointer'
           }}
         >
-          {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
+          {authState === "login" && "Don't have an account? Sign Up"}
+          {authState === "signup" && "Already have an account? Login"}
+          {(authState === "forgot" || authState === "reset") && "Back to Login"}
         </button>
       </div>
     </div>

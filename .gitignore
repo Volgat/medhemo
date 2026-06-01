@@ -33,3 +33,6 @@ brain/
 # OS
 .DS_Store
 Thumbs.db
+
+# Scratch folder
+hemo_backend/scratch/

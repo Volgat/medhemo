@@ -21,6 +21,13 @@ const TRANSLATIONS = {
     noConversations: "No conversations",
     settings: "Settings",
     logout: "Logout",
+  },
+  es: {
+    history: "Historial",
+    clearHistory: "Borrar historial",
+    noConversations: "Sin conversaciones",
+    settings: "Configuración",
+    logout: "Cerrar sesión",
   }
 };
 
@@ -35,8 +42,8 @@ export default function Sidebar({
   onLogoClick,
   onSettingsClick
 }) {
-  const lang = config.language || "fr";
-  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS["fr"][key];
+  const lang = config.language || "en";
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS["en"][key];
 
   return (
     <nav className={`sidebar ${isOpen ? "" : "collapsed"}`}>

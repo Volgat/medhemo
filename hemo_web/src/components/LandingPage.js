@@ -25,6 +25,16 @@ const TRANSLATIONS = {
     loginHere: "Login here",
     signup: "Sign up",
     login: "Log in",
+  },
+  es: {
+    title: "Su compañero de salud diario",
+    description: "MedHemo le ayuda a comprender sus síntomas y responde a sus preguntas de bienestar. Es una herramienta de apoyo simple para acompañarle a diario: de ninguna manera reemplaza a un médico o al consejo médico profesional.",
+    btnGetStarted: "Comenzar con Hemo",
+    textUnlock: "Regístrese para chatear con su asistente personalizado",
+    textHaveAccount: "¿Ya registrado?",
+    loginHere: "Iniciar sesión aquí",
+    signup: "Registrarse",
+    login: "Iniciar sesión",
   }
 };
 

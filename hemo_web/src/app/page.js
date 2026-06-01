@@ -63,6 +63,31 @@ const TRANSLATIONS = {
     backHome: "Back to Home",
     whisperTranscription: "Voice transcription",
     visualDescription: "Detailed visual description"
+  },
+  es: {
+    welcome: "¡Hola! Soy **Hemo**, su asistente de salud personal. ¿Cómo puedo ayudarle hoy?",
+    resetMsg: "Conversación restablecida. ¿Cómo puedo ayudarle?",
+    processing: "Procesando...",
+    speaking: "Hablando...",
+    listening: "Escuchando...",
+    conversation: "Conversación",
+    recording: "Grabación",
+    online: "En línea",
+    hideSidebar: "Ocultar barra",
+    showSidebar: "Mostrar barra",
+    newChat: "Nueva conversación",
+    hemoListening: "Hemo está escuchando...",
+    hemoAnalyzing: "Hemo está analizando...",
+    hemoResponding: "Hemo está respondiendo...",
+    readyToSpeak: "Listo para hablar",
+    stop: "Detener",
+    close: "Cerrar",
+    placeholderConv: "Modo de conversación activo...",
+    placeholderAsk: "Haga una pregunta a Hemo...",
+    hint: "MedHemo AI · Consejos de salud personalizados · Pegue una imagen directamente",
+    backHome: "Volver al inicio",
+    whisperTranscription: "Transcripción de voz",
+    visualDescription: "Descripción visual detallada"
   }
 };
 
@@ -115,7 +140,7 @@ export default function UnifiedPage() {
         window.location.href = data.url;
       }
     } catch (err) {
-      alert("Erreur lors de la redirection vers la page de paiement Stripe.");
+      alert("Error redirecting to Stripe payment page. Please try again later.");
     } finally {
       setBillingLoading(false);
     }
@@ -136,7 +161,7 @@ export default function UnifiedPage() {
         window.location.href = data.url;
       }
     } catch (err) {
-      alert("Erreur lors de la redirection vers le portail client Stripe.");
+      alert("Error redirecting to Stripe billing portal. Please try again later.");
     } finally {
       setBillingLoading(false);
     }
@@ -168,8 +193,8 @@ export default function UnifiedPage() {
     }
   }, [config]);
 
-  const lang = config.language || "fr";
-  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS["fr"][key];
+  const lang = config.language || "en";
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS["en"][key];
 
   // Image
   const [imageFile, setImageFile]       = useState(null);
@@ -309,7 +334,7 @@ export default function UnifiedPage() {
     } catch (err) {
       setMessages(p => [...p, {
         role: "assistant",
-        content: `Je suis désolé, une erreur s'est produite. Veuillez réessayer dans quelques instants. Si le problème persiste, contactez le support.`,
+        content: "I am sorry, an error occurred. Please try again shortly.",
       }]);
     } finally {
       setIsLoading(false);
@@ -345,7 +370,7 @@ export default function UnifiedPage() {
       setIsRecording(true);
       setRecordSeconds(0);
       timerRef.current = setInterval(() => setRecordSeconds(s => s + 1), 1000);
-    } catch { alert("Accès au microphone refusé."); }
+    } catch { alert("Microphone access denied."); }
   }, [isRecording]);
 
   const stopRecording = useCallback(() => {

@@ -104,12 +104,24 @@ def _safe_unlink(path: str) -> None:
         pass
 
 def _get_db_session():
-    if not _DB_AVAILABLE or not _DB_INIT_OK:
-        raise RuntimeError(
-            "La base de données est inaccessible. "
-            "Vérifiez que DATABASE_URL pointe vers le Connection Pooler Supabase (port 6543, IPv4)."
-        )
-    return next(get_db())
+    if not _DB_AVAILABLE:
+        raise RuntimeError("Database integration is not available in this environment.")
+    try:
+        db = next(get_db())
+        # Verify connection
+        db.execute(text("SELECT 1"))
+        return db
+    except Exception as e:
+        logger.error(f"Database session creation failed: {e}")
+        raise RuntimeError("The database is currently inaccessible. Please try again shortly.")
+
+
+def _format_error(e: Exception) -> str:
+    if isinstance(e, RuntimeError):
+        return str(e)
+    return "An unexpected error occurred. Please try again shortly."
+
+
 
 def _make_system_prompt() -> str:
     return (
@@ -153,13 +165,13 @@ async def _call_chat(prompt: str, history: list) -> str:
             resp = await client.post(HF_CHAT_URL, json=payload, headers=HF_HEADERS)
         if resp.status_code != 200:
             logger.error(f"Chat API {resp.status_code}: {resp.text[:300]}")
-            return "Je suis désolé, le service IA est momentanément indisponible. Veuillez réessayer."
+            return "I am sorry, the AI service is temporarily unavailable. Please try again shortly."
         data = resp.json()
         raw = data["choices"][0]["message"]["content"].strip()
         return _clean_response(raw)
     except Exception as e:
         logger.error(f"Chat error: {e}")
-        return "Une erreur s'est produite. Veuillez réessayer dans un instant."
+        return "An error occurred. Please try again shortly."
 
 
 async def _call_whisper(audio_bytes: bytes) -> str | None:
@@ -222,9 +234,15 @@ async def _synthesize_tts(text: str, voice_type: str = "lila") -> bytes:
         try:
             lang = detect(cleaned)
         except Exception:
-            lang = "fr"
+            lang = "en"
 
-        lang_key = "fr" if lang.startswith("fr") else "en"
+        if lang.startswith("fr"):
+            lang_key = "fr"
+        elif lang.startswith("es"):
+            lang_key = "es"
+        else:
+            lang_key = "en"
+
         VOICES = {
             "fr": {"lila": "fr-FR-DeniseNeural", "ethan": "fr-FR-HenriNeural",
                    "female1": "fr-CH-ArianeNeural", "female2": "fr-BE-CharlineNeural",
@@ -232,6 +250,9 @@ async def _synthesize_tts(text: str, voice_type: str = "lila") -> bytes:
             "en": {"lila": "en-US-AvaNeural",    "ethan": "en-GB-ThomasNeural",
                    "female1": "en-US-EmmaNeural", "female2": "en-AU-NatashaNeural",
                    "male1": "en-US-AndrewNeural", "male2": "en-IE-ConnorNeural"},
+            "es": {"lila": "es-ES-ElviraNeural", "ethan": "es-ES-AlvaroNeural",
+                   "female1": "es-ES-ElviraNeural", "female2": "es-MX-DaliaNeural",
+                   "male1": "es-ES-AlvaroNeural", "male2": "es-MX-JorgeNeural"},
         }
         voice_id = VOICES[lang_key].get(voice_type.lower(), VOICES[lang_key]["lila"])
         communicate = edge_tts.Communicate(cleaned, voice_id)
@@ -250,13 +271,7 @@ async def _synthesize_tts(text: str, voice_type: str = "lila") -> bytes:
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def handle_health(_job_input: dict) -> dict:
-    try:
-        from database import init_db
-        init_db()
-        return {"status": "ok", "db_status": "initialized"}
-    except Exception as e:
-        import traceback
-        return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+    return {"status": "healthy", "service": "Hemo AI", "version": "3.1.0"}
 
 
 async def handle_chat(job_input: dict) -> dict:
@@ -375,7 +390,7 @@ async def handle_auth_signup(job_input: dict) -> dict:
         }
     except Exception as e:
         logger.error(f"Signup error: {e}")
-        return {"detail": str(e)}
+        return {"detail": _format_error(e)}
 
 
 async def handle_auth_login(job_input: dict) -> dict:
@@ -397,7 +412,7 @@ async def handle_auth_login(job_input: dict) -> dict:
         }
     except Exception as e:
         logger.error(f"Login error: {e}")
-        return {"detail": str(e)}
+        return {"detail": _format_error(e)}
 
 
 async def handle_auth_status(job_input: dict) -> dict:
@@ -416,7 +431,7 @@ async def handle_auth_status(job_input: dict) -> dict:
         }
     except Exception as e:
         logger.error(f"Auth status error: {e}")
-        return {"detail": str(e)}
+        return {"detail": _format_error(e)}
 
 
 # ── Billing handlers ──────────────────────────────────────────────────────────

@@ -236,14 +236,14 @@ export default function AdminDashboard() {
       let json = {};
       try { json = await res.json(); } catch {}
       if (!res.ok) {
-        setErr(json.error || `Error ${res.status}. Please check if the RunPod endpoint is active.`);
+        setErr(json.error || `Error ${res.status}. Please try again shortly.`);
         return;
       }
       if (json.error) { setErr(json.error); return; }
       setData(json);
       setLastRefresh(new Date());
     } catch(e) {
-      setErr("Failed to contact the backend server. The RunPod endpoint is likely offline.");
+      setErr("Failed to connect to the server. Please try again shortly.");
     } finally {
       setLoading(false);
     }
@@ -262,12 +262,12 @@ export default function AdminDashboard() {
         setData(json);
         setLastRefresh(new Date());
       } else if (res.status === 401) {
-        setAuthErr("Mot de passe incorrect.");
+        setAuthErr("Incorrect password.");
       } else {
-        setAuthErr(json.error || `Erreur serveur (${res.status}). Le backend RunPod est hors-ligne.`);
+        setAuthErr(json.error || `Server error (${res.status}). Please try again shortly.`);
       }
     } catch (err) {
-      setAuthErr("Impossible de contacter le serveur backend. Le serveur RunPod est probablement arrêté (fonds insuffisants).");
+      setAuthErr("Failed to connect to the server. Please try again shortly.");
     } finally {
       setAuthLoading(false);
     }

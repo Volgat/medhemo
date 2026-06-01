@@ -20,6 +20,7 @@ const TRANSLATIONS = {
     appLanguage: "Langue de l'interface",
     langFr: "Français",
     langEn: "English",
+    langEs: "Español",
     expertMode: "Mode Expert",
     expertModeDesc: "Affiche les descriptions visuelles détaillées et les poids d'analyse technique dans les réponses.",
     discussionActions: "Actions de discussion",
@@ -71,6 +72,7 @@ const TRANSLATIONS = {
     appLanguage: "Interface Language",
     langFr: "Français",
     langEn: "English",
+    langEs: "Español",
     expertMode: "Expert Mode",
     expertModeDesc: "Displays detailed visual descriptions and technical analysis weights in responses.",
     discussionActions: "Chat Actions",
@@ -102,12 +104,64 @@ const TRANSLATIONS = {
     featureVoice: "Voice Interactions: Voice recognition to speak with the assistant",
     featurePdf: "Analysis of complete PDF documents",
     premiumPricing: "Premium Pricing",
-    cancelAnytime: "Cancel anytime easily",
+    cancelAnytime: "Cancel easily at any time",
     perMonth: "/month",
     becomePremium: "Become Premium 🚀",
     manageBilling: "Manage Stripe Billing",
     premiumDescription: "Thank you for your trust! You currently have unlimited access to all our Premium features, including medical vision, text-to-speech, and voice transcription.",
     loading: "Loading...",
+  },
+  es: {
+    settings: "Configuración",
+    general: "General",
+    audioModel: "Audio y Modelo",
+    subscription: "Suscripción",
+    interfaceSettings: "Ajustes de Interfaz",
+    interfaceSettingsDesc: "Personaliza la pantalla y la experiencia visual de la aplicación.",
+    appTheme: "Tema de la Aplicación",
+    themeLight: "Modo Claro",
+    themeDark: "Modo Oscuro",
+    appLanguage: "Idioma de la Interfaz",
+    langFr: "Français",
+    langEn: "English",
+    langEs: "Español",
+    expertMode: "Modo Experto",
+    expertModeDesc: "Muestra descripciones visuales detalladas y pesos de análisis técnico en las respuestas.",
+    discussionActions: "Acciones de Chat",
+    discussionActionsDesc: "Borrar el historial local o restablecer la sesión de chat.",
+    resetDiscussion: "Restablecer Chat",
+    resetConfirm: "¿Estás seguro de que deseas borrar el historial de esta conversación?",
+    ttsTitle: "Síntesis de voz TTS",
+    ttsDesc: "Habilitar la lectura automática de audio de las respuestas del asistente.",
+    ttsAuto: "Lectura automática de audio",
+    assistantVoice: "Voz del Asistente",
+    voiceLila: "Lila Natural",
+    voiceEthan: "Ethan Natural",
+    voiceFemale1: "Femenina Suave",
+    voiceMale1: "Masculina Serena",
+    voiceFemale2: "Femenina Pro",
+    voiceMale2: "Masculina Pro",
+    generationSettings: "Ajustes de Generación",
+    generationSettingsDesc: "Ajustar los hiperparámetros del modelo de lenguaje.",
+    tempLabel: "Temperatura de Creatividad",
+    maxTokensLabel: "Longitud Máxima de Respuesta",
+    streamModeLabel: "Modo streaming con visualización progresiva",
+    currentSubscription: "Tu Suscripción Actual",
+    statusActive: "Activa",
+    statusStandard: "Estándar",
+    subPremium: "Hemo Premium 🌟",
+    subStandard: "Hemo Estándar",
+    unlockPremium: "Desbloquear Funciones Premium",
+    featureVision: "Visión médica: Análisis de imágenes como radiografías y recetas",
+    featureVoice: "Interacciones de voz: Reconocimiento de voz para hablar con el asistente",
+    featurePdf: "Análisis de documentos PDF completos",
+    premiumPricing: "Precios Premium",
+    cancelAnytime: "Cancela fácilmente en cualquier momento",
+    perMonth: "/mes",
+    becomePremium: "Convertirse en Premium 🚀",
+    manageBilling: "Administrar Facturación de Stripe",
+    premiumDescription: "¡Gracias por su confianza! Actualmente tiene acceso ilimitado a todas nuestras funciones Premium, incluida la visión médica, el texto a voz y la transcripción de voz.",
+    loading: "Cargando...",
   }
 };
 
@@ -239,6 +293,20 @@ export default function SettingsModal({
       <label style={{ fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 500 }}>{t("appLanguage")}</label>
       <div style={{ display: "flex", gap: 12 }}>
         <button
+          onClick={() => set("language", "en")}
+          style={{
+            flex: 1, padding: "12px", borderRadius: 10,
+            border: config.language === "en" ? "2px solid var(--accent)" : "1px solid var(--border)",
+            background: config.language === "en" ? "var(--accent-muted)" : "var(--input-bg)",
+            color: config.language === "en" ? "var(--accent)" : "var(--text-primary)",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontSize: "0.85rem"
+          }}
+        >
+          <span style={{ fontSize: "1rem" }}>🇬🇧</span>
+          <span>{t("langEn")}</span>
+        </button>
+        <button
           onClick={() => set("language", "fr")}
           style={{
             flex: 1, padding: "12px", borderRadius: 10,
@@ -253,18 +321,18 @@ export default function SettingsModal({
           <span>{t("langFr")}</span>
         </button>
         <button
-          onClick={() => set("language", "en")}
+          onClick={() => set("language", "es")}
           style={{
             flex: 1, padding: "12px", borderRadius: 10,
-            border: config.language === "en" ? "2px solid var(--accent)" : "1px solid var(--border)",
-            background: config.language === "en" ? "var(--accent-muted)" : "var(--input-bg)",
-            color: config.language === "en" ? "var(--accent)" : "var(--text-primary)",
+            border: config.language === "es" ? "2px solid var(--accent)" : "1px solid var(--border)",
+            background: config.language === "es" ? "var(--accent-muted)" : "var(--input-bg)",
+            color: config.language === "es" ? "var(--accent)" : "var(--text-primary)",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontSize: "0.85rem"
           }}
         >
-          <span style={{ fontSize: "1rem" }}>🇬🇧</span>
-          <span>{t("langEn")}</span>
+          <span style={{ fontSize: "1rem" }}>🇪🇸</span>
+          <span>{t("langEs")}</span>
         </button>
       </div>
     </div>

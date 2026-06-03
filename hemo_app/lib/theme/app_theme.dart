@@ -3,19 +3,19 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // ── Brand Colors ────────────────────────────────────────────────────
-  static const Color primary        = Color(0xFF4BBE4F);
-  static const Color primaryLight   = Color(0xFFE8F7E9);
-  static const Color primaryDark    = Color(0xFF2E8C31);
-  static const Color backgroundLight = Color(0xFFF6F8F6);
-  static const Color backgroundDark  = Color(0xFF141E15);
-  static const Color surfaceLight    = Color(0xFFFFFFFF);
-  static const Color surfaceDark     = Color(0xFF1E2B1F);
-  static const Color cardDark        = Color(0xFF243025);
+  static const Color primary        = Color(0xFF10A37F);
+  static const Color primaryLight   = Color(0xFFE8FAF5);
+  static const Color primaryDark    = Color(0xFF0E906F);
+  static const Color backgroundLight = Color(0xFFFFFFFF);
+  static const Color backgroundDark  = Color(0xFF212121);
+  static const Color surfaceLight    = Color(0xFFF9F9F9);
+  static const Color surfaceDark     = Color(0xFF171717);
+  static const Color cardDark        = Color(0xFF2F2F2F);
 
   // ── Text Colors ────────────────────────────────────────────────────
-  static const Color textDark   = Color(0xFF0F1B10);
-  static const Color textLight  = Color(0xFFF1F7F1);
-  static const Color textMuted  = Color(0xFF7A8E7B);
+  static const Color textDark   = Color(0xFF1A1A1A);
+  static const Color textLight  = Color(0xFFECECEC);
+  static const Color textMuted  = Color(0xFF8E8EA0);
 
   // ── Light Theme ────────────────────────────────────────────────────
   static ThemeData lightTheme = ThemeData(
@@ -69,7 +69,7 @@ class AppTheme {
     brightness: Brightness.dark,
     colorScheme: ColorScheme.dark(
       primary: primary,
-      onPrimary: Colors.black,
+      onPrimary: Colors.white,
       secondary: primary,
       surface: surfaceDark,
       onSurface: textLight,
@@ -90,7 +90,7 @@ class AppTheme {
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.white,
         shape: const StadiumBorder(),
         textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),

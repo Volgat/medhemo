@@ -491,13 +491,16 @@ async def synthesize_tts(text: str, voice_type: str = "lila") -> bytes:
 
 @app.post("/api/auth/signup", response_model=AuthResponse)
 async def signup(user_data: UserSignup, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.username == user_data.username).first()
+    db_user = db.query(User).filter(
+        (func.lower(User.username) == func.lower(user_data.username.strip())) |
+        (func.lower(User.email) == func.lower(user_data.email.strip()))
+    ).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Username already exists")
+        raise HTTPException(status_code=400, detail="Username or email already exists")
     
     new_user = User(
-        username=user_data.username,
-        email=user_data.email,
+        username=user_data.username.strip(),
+        email=user_data.email.strip(),
         hashed_password=hash_password(user_data.password),
         subscription_status="inactive"
     )
@@ -513,7 +516,11 @@ async def signup(user_data: UserSignup, db: Session = Depends(get_db)):
 
 @app.post("/api/auth/login", response_model=AuthResponse)
 async def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == user_data.username).first()
+    username_input = user_data.username.strip()
+    user = db.query(User).filter(
+        (func.lower(User.username) == func.lower(username_input)) |
+        (func.lower(User.email) == func.lower(username_input))
+    ).first()
     if not user or not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     return {
@@ -525,7 +532,11 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
 
 @app.get("/api/auth/status")
 async def get_user_status(username: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == username).first()
+    username_input = username.strip()
+    user = db.query(User).filter(
+        (func.lower(User.username) == func.lower(username_input)) |
+        (func.lower(User.email) == func.lower(username_input))
+    ).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {
@@ -536,7 +547,11 @@ async def get_user_status(username: str, db: Session = Depends(get_db)):
 
 @app.post("/api/billing/create-checkout-session")
 async def create_checkout_session(req: CheckoutRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == req.username).first()
+    username_input = req.username.strip()
+    user = db.query(User).filter(
+        (func.lower(User.username) == func.lower(username_input)) |
+        (func.lower(User.email) == func.lower(username_input))
+    ).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -578,7 +593,11 @@ async def create_checkout_session(req: CheckoutRequest, db: Session = Depends(ge
 
 @app.post("/api/billing/portal")
 async def create_portal_session(req: PortalRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == req.username).first()
+    username_input = req.username.strip()
+    user = db.query(User).filter(
+        (func.lower(User.username) == func.lower(username_input)) |
+        (func.lower(User.email) == func.lower(username_input))
+    ).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -691,7 +710,11 @@ async def health():
 def check_premium_access(username: str, db: Session) -> None:
     if not username:
         raise HTTPException(status_code=403, detail="Authentication required")
-    user = db.query(User).filter(User.username == username).first()
+    username_input = username.strip()
+    user = db.query(User).filter(
+        (func.lower(User.username) == func.lower(username_input)) |
+        (func.lower(User.email) == func.lower(username_input))
+    ).first()
     if not user or user.subscription_status != "active":
         raise HTTPException(status_code=403, detail="Premium subscription required")
 

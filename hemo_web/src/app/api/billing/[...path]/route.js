@@ -18,13 +18,13 @@ async function callRunPod(jobInput) {
   });
   const data = await res.json();
   if (data.status === "COMPLETED" && data.output !== undefined) return data.output;
-  if (data.status === "FAILED") throw new Error(data.error || "RunPod job failed");
+  if (data.status === "FAILED") throw new Error("The billing request failed. Please try again shortly.");
   return data;
 }
 
 export async function POST(request, { params }) {
   if (!RUNPOD_API_KEY) {
-    return Response.json({ detail: "Server misconfiguration" }, { status: 500 });
+    return Response.json({ detail: "The billing service is temporarily unavailable. Please try again shortly." }, { status: 500 });
   }
   try {
     const path   = (await params).path || [];
@@ -39,6 +39,6 @@ export async function POST(request, { params }) {
     return Response.json(output);
   } catch (err) {
     console.error("[billing proxy] error:", err);
-    return Response.json({ detail: err.message }, { status: 500 });
+    return Response.json({ detail: err.message || "An unexpected error occurred. Please try again shortly." }, { status: 500 });
   }
 }

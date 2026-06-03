@@ -24,13 +24,13 @@ async function pollStatus(jobId, maxWaitMs = 80000) {
     const data = await res.json();
     if (data.status === "COMPLETED" || data.status === "FAILED") return data;
   }
-  throw new Error("TTS timed out");
+  throw new Error("The voice request timed out. Please try again shortly.");
 }
 
 export async function POST(request) {
   if (!RUNPOD_API_KEY) {
     return Response.json(
-      { error: "RUNPOD_API_KEY is not configured on the server." },
+      { error: "Server configuration error. Please try again shortly." },
       { status: 500 }
     );
   }
@@ -61,9 +61,9 @@ export async function POST(request) {
     let runpodData = await runpodRes.json();
 
     if (!runpodRes.ok) {
-      console.error("[tts proxy] RunPod HTTP error:", runpodRes.status, runpodData);
+      console.error("[tts proxy] Gateway HTTP error:", runpodRes.status, runpodData);
       return Response.json(
-        { error: `RunPod gateway error (${runpodRes.status})` },
+        { error: "The voice service is temporarily unavailable. Please try again shortly." },
         { status: runpodRes.status }
       );
     }
@@ -74,7 +74,7 @@ export async function POST(request) {
         runpodData = await pollStatus(runpodData.id, 80000);
       } catch {
         // TTS failed silently — frontend handles missing audio gracefully
-        return Response.json({ error: "TTS timed out (cold start)" }, { status: 503 });
+        return Response.json({ error: "The voice system is initializing. Please try again shortly." }, { status: 503 });
       }
     }
 
@@ -85,7 +85,7 @@ export async function POST(request) {
 
     if (runpodData.status === "FAILED") {
       return Response.json(
-        { error: "TTS job failed", detail: runpodData.error },
+        { error: "The voice request failed. Please try again shortly." },
         { status: 500 }
       );
     }
@@ -96,7 +96,7 @@ export async function POST(request) {
   } catch (err) {
     console.error("[tts proxy] Internal error:", err);
     return Response.json(
-      { error: "TTS proxy error", detail: err.message },
+      { error: "An unexpected error occurred. Please try again shortly." },
       { status: 500 }
     );
   }

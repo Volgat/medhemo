@@ -13,7 +13,7 @@ if not DATABASE_URL:
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -55,14 +55,14 @@ def init_db():
         from sqlalchemy import text
         db = SessionLocal()
         # Add reset_code to users table if not exists
-        if DATABASE_URL.startswith("sqlite"):
-            try:
-                db.execute(text("SELECT reset_code FROM users LIMIT 1"))
-            except Exception:
+        try:
+            db.execute(text("SELECT reset_code FROM users LIMIT 1"))
+        except Exception:
+            db.rollback()
+            if DATABASE_URL.startswith("sqlite"):
                 db.execute(text("ALTER TABLE users ADD COLUMN reset_code VARCHAR"))
-                db.commit()
-        else:
-            db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_code VARCHAR"))
+            else:
+                db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_code VARCHAR"))
             db.commit()
         db.close()
     except Exception as e:

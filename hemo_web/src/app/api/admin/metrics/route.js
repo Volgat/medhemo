@@ -31,7 +31,8 @@ async function sb(table, query = "", method = "GET", body = null) {
   });
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Supabase (${res.status}): ${err}`);
+    console.error(`[metrics route] DB query error (${res.status}): ${err}`);
+    throw new Error("The database is currently inaccessible. Please try again shortly.");
   }
   const text = await res.text();
   // Supabase returns count in Content-Range header
@@ -153,7 +154,7 @@ async function getMetricsFromSupabase() {
 // ── RunPod fallback ──────────────────────────────────────────────────────────
 async function getMetricsFromRunPod(password) {
   if (!RUNPOD_API_KEY) {
-    throw new Error("RUNPOD_API_KEY not configured");
+    throw new Error("The metrics service is temporarily unavailable. Please try again shortly.");
   }
   const res = await fetch(`${RUNPOD_SYNC_URL}?timeout=60`, {
     method: "POST",
@@ -165,7 +166,7 @@ async function getMetricsFromRunPod(password) {
   });
   const data = await res.json();
   if (data.status === "COMPLETED" && data.output !== undefined) return data.output;
-  if (data.status === "FAILED") throw new Error(data.error || "RunPod job failed");
+  if (data.status === "FAILED") throw new Error("The metrics request failed. Please try again shortly.");
   return data;
 }
 
@@ -182,7 +183,7 @@ export async function GET(request) {
   if (!isAuthorized && SUPABASE_URL && SUPABASE_SERVICE_KEY) {
     try {
       const expectedHash = crypto.createHash("sha256").update(enteredKey).digest("hex");
-      const users = await sb("users", `?or=(username.eq.admin,username.eq.mikeamega,email.eq.mikeamega@yahoo.fr)&select=hashed_password`);
+      const users = await sb("users", `?or=(username.ilike.admin,username.ilike.mikeamega,email.ilike.mikeamega@yahoo.fr)&select=hashed_password`);
       if (users && users.data) {
         for (const user of users.data) {
           if (user.hashed_password === expectedHash) {
@@ -207,7 +208,7 @@ export async function GET(request) {
         const metrics = await getMetricsFromSupabase();
         return Response.json(metrics);
       } catch (supaErr) {
-        console.error("[admin/metrics] Supabase error, falling back to RunPod:", supaErr.message);
+        console.error("[admin/metrics] Database error, falling back to backup service:", supaErr.message);
         // Fall through to RunPod
       }
     }
@@ -219,8 +220,8 @@ export async function GET(request) {
   } catch (err) {
     console.error("[admin/metrics] Error:", err);
     return Response.json({
-      error: err.message,
-      hint: "Vérifiez que SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ou RUNPOD_API_KEY sont configurés dans les variables d'environnement Vercel."
+      error: err.message || "An unexpected error occurred. Please try again shortly.",
+      hint: "Please verify that the server environment variables are correctly configured."
     }, { status: 500 });
   }
 }

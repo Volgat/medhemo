@@ -25,7 +25,10 @@ import base64
 import hashlib
 import logging
 import tempfile
+import contextvars
 from datetime import datetime, timedelta
+
+_db_session_var = contextvars.ContextVar("db_session", default=None)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -50,7 +53,7 @@ import runpod  # type: ignore
 
 # ── DB imports ────────────────────────────────────────────────────────────────
 try:
-    from database import init_db, get_db, User, MessageLog, hash_password, verify_password
+    from database import init_db, get_db, User, MessageLog, hash_password, verify_password, SessionLocal
     from sqlalchemy.orm import Session
     from sqlalchemy import func, text
     _DB_AVAILABLE = True
@@ -106,14 +109,30 @@ def _safe_unlink(path: str) -> None:
 def _get_db_session():
     if not _DB_AVAILABLE:
         raise RuntimeError("Database integration is not available in this environment.")
+    
+    db = _db_session_var.get()
+    if db is not None:
+        return db
+        
     try:
-        db = next(get_db())
+        db = SessionLocal()
         # Verify connection
         db.execute(text("SELECT 1"))
+        _db_session_var.set(db)
         return db
     except Exception as e:
         logger.error(f"Database session creation failed: {e}")
         raise RuntimeError("The database is currently inaccessible. Please try again shortly.")
+
+
+def _close_db_session():
+    db = _db_session_var.get()
+    if db is not None:
+        try:
+            db.close()
+        except Exception:
+            pass
+        _db_session_var.set(None)
 
 
 def _format_error(e: Exception) -> str:
@@ -368,13 +387,16 @@ async def handle_tts(job_input: dict) -> dict:
 async def handle_auth_signup(job_input: dict) -> dict:
     username = job_input.get("username", "").strip()
     email    = job_input.get("email",    "").strip()
-    password = job_input.get("password", "").strip()
+    password = job_input.get("password", "")
     if not username or not email or not password:
         return {"detail": "Username, email and password are required."}
     try:
         db = _get_db_session()
-        if db.query(User).filter(User.username == username).first():
-            return {"detail": "Username already exists"}
+        if db.query(User).filter(
+            (func.lower(User.username) == func.lower(username)) |
+            (func.lower(User.email) == func.lower(email))
+        ).first():
+            return {"detail": "Username or email already exists"}
         new_user = User(
             username=username, email=email,
             hashed_password=hash_password(password),
@@ -395,12 +417,15 @@ async def handle_auth_signup(job_input: dict) -> dict:
 
 async def handle_auth_login(job_input: dict) -> dict:
     username = job_input.get("username", "").strip()
-    password = job_input.get("password", "").strip()
+    password = job_input.get("password", "")
     if not username or not password:
         return {"detail": "Username and password are required."}
     try:
         db = _get_db_session()
-        user = db.query(User).filter(User.username == username).first()
+        user = db.query(User).filter(
+            (func.lower(User.username) == func.lower(username)) |
+            (func.lower(User.email) == func.lower(username))
+        ).first()
         if not user or not verify_password(password, user.hashed_password):
             return {"detail": "Invalid credentials"}
         user.last_seen = datetime.utcnow()
@@ -421,7 +446,10 @@ async def handle_auth_status(job_input: dict) -> dict:
         return {"detail": "Username required"}
     try:
         db = _get_db_session()
-        user = db.query(User).filter(User.username == username).first()
+        user = db.query(User).filter(
+            (func.lower(User.username) == func.lower(username)) |
+            (func.lower(User.email) == func.lower(username))
+        ).first()
         if not user:
             return {"detail": "User not found"}
         return {
@@ -462,12 +490,15 @@ async def handle_auth_reset_request(job_input: dict) -> dict:
 async def handle_auth_reset_password(job_input: dict) -> dict:
     username = job_input.get("username", "").strip()
     reset_code = job_input.get("resetCode", "").strip()
-    new_password = job_input.get("newPassword", "").strip()
+    new_password = job_input.get("newPassword", "")
     if not username or not reset_code or not new_password:
         return {"detail": "Username, reset code, and new password are required."}
     try:
         db = _get_db_session()
-        user = db.query(User).filter(User.username == username).first()
+        user = db.query(User).filter(
+            (func.lower(User.username) == func.lower(username)) |
+            (func.lower(User.email) == func.lower(username))
+        ).first()
         if not user:
             return {"detail": "User not found."}
         
@@ -493,7 +524,7 @@ async def handle_billing_checkout(job_input: dict) -> dict:
         import stripe as _stripe  # type: ignore
         _stripe.api_key = STRIPE_SECRET_KEY
         db   = _get_db_session()
-        user = db.query(User).filter(User.username == username).first()
+        user = db.query(User).filter(func.lower(User.username) == func.lower(username)).first()
         if not user:
             return {"detail": "User not found"}
         if not user.stripe_customer_id:
@@ -512,7 +543,7 @@ async def handle_billing_checkout(job_input: dict) -> dict:
         return {"url": session.url}
     except Exception as e:
         logger.error(f"Billing checkout error: {e}")
-        return {"detail": str(e)}
+        return {"detail": "The billing service is temporarily unavailable. Please try again shortly."}
 
 
 async def handle_billing_portal(job_input: dict) -> dict:
@@ -523,7 +554,7 @@ async def handle_billing_portal(job_input: dict) -> dict:
         import stripe as _stripe  # type: ignore
         _stripe.api_key = STRIPE_SECRET_KEY
         db   = _get_db_session()
-        user = db.query(User).filter(User.username == username).first()
+        user = db.query(User).filter(func.lower(User.username) == func.lower(username)).first()
         if not user or not user.stripe_customer_id:
             return {"detail": "No active billing profile found"}
         session = _stripe.billing_portal.Session.create(
@@ -533,7 +564,7 @@ async def handle_billing_portal(job_input: dict) -> dict:
         return {"url": session.url}
     except Exception as e:
         logger.error(f"Billing portal error: {e}")
-        return {"detail": str(e)}
+        return {"detail": "The billing portal is temporarily unavailable. Please try again shortly."}
 
 
 # ── Metrics ───────────────────────────────────────────────────────────────────
@@ -546,7 +577,7 @@ async def handle_track_message(job_input: dict) -> dict:
         db  = _get_db_session()
         now = datetime.utcnow()
         if username:
-            user = db.query(User).filter(User.username == username).first()
+            user = db.query(User).filter(func.lower(User.username) == func.lower(username)).first()
             if user:
                 user.last_seen      = now
                 user.total_messages = (user.total_messages or 0) + 1
@@ -559,7 +590,7 @@ async def handle_track_message(job_input: dict) -> dict:
         return {"tracked": True}
     except Exception as e:
         logger.error(f"track_message error: {e}")
-        return {"tracked": False, "error": str(e)}
+        return {"tracked": False, "error": "The tracking service is temporarily unavailable. Please try again shortly."}
 
 
 async def handle_metrics_overview(job_input: dict) -> dict:
@@ -641,7 +672,7 @@ async def handle_metrics_overview(job_input: dict) -> dict:
         }
     except Exception as e:
         logger.error(f"metrics_overview error: {e}", exc_info=True)
-        return {"error": str(e)}
+        return {"error": "Failed to load metrics overview. Please try again shortly."}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -682,6 +713,8 @@ async def handler(job: dict) -> dict:
     except Exception as e:
         logger.error(f"Handler error: {e}", exc_info=True)
         return {"error": str(e)}
+    finally:
+        _close_db_session()
 
 
 # ─────────────────────────────────────────────────────────────────────────────

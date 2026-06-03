@@ -108,8 +108,8 @@ function DonutChart({ segments = [], size = 140 }) {
   const cy     = size / 2;
   const r      = size / 2 - 14;
   let   cursor = -Math.PI / 2;
-
-  const arcs = segments.map((seg) => {
+  const arcs = [];
+  for (const seg of segments) {
     const frac  = seg.value / total;
     const angle = frac * Math.PI * 2;
     const x1    = cx + r * Math.cos(cursor);
@@ -119,8 +119,8 @@ function DonutChart({ segments = [], size = 140 }) {
     const y2    = cy + r * Math.sin(cursor);
     const large = angle > Math.PI ? 1 : 0;
     const d     = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
-    return { ...seg, d, pct: Math.round(frac * 100) };
-  });
+    arcs.push({ ...seg, d, pct: Math.round(frac * 100) });
+  }
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -212,6 +212,7 @@ const MODALITY_COLORS = { text:"#3f3f46", voice:"#52525b", image:"#71717a", mult
 const MODALITY_LABELS = { text:"TEXT", voice:"VOICE", image:"IMAGE", multimodal:"MULTIMODAL" };
 
 // ── Main Dashboard Component ──────────────────────────────────────────────────
+// ── Main Dashboard Component ──────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [authed,    setAuthed]    = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
@@ -299,15 +300,15 @@ export default function AdminDashboard() {
             <div style={{ display:"inline-flex", padding:"8px", background:"#18181b", border:"1px solid #27272a", borderRadius:6, marginBottom:16 }}>
               {ICONS.Lock()}
             </div>
-            <h1 style={{ fontSize:"1.25rem", fontWeight:600, color:"#f4f4f5", margin:0, letterSpacing:"-0.01em" }}>Console Administrateur</h1>
-            <p style={{ color:"#71717a", marginTop:4, fontSize:13 }}>Authentifiez-vous pour charger les métriques du système</p>
+            <h1 style={{ fontSize:"1.25rem", fontWeight:600, color:"#f4f4f5", margin:0, letterSpacing:"-0.01em" }}>Admin Console</h1>
+            <p style={{ color:"#71717a", marginTop:4, fontSize:13 }}>Log in to load the system metrics</p>
           </div>
           <form onSubmit={handleLogin}>
             <div style={{ display:"flex", flexDirection:"column", gap:6, marginBottom:16 }}>
-              <label style={{ fontSize:12, fontWeight:500, color:"#a1a1aa" }}>Clé d'administration</label>
+              <label style={{ fontSize:12, fontWeight:500, color:"#a1a1aa" }}>Admin Password</label>
               <input
                 type="password"
-                placeholder={authLoading ? "Vérification en cours..." : "Entrez le mot de passe"}
+                placeholder={authLoading ? "Verifying..." : "Enter password"}
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 disabled={authLoading}
@@ -345,10 +346,10 @@ export default function AdminDashboard() {
                     <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
                     <path d="M12 2a10 10 0 0 1 10 10" />
                   </svg>
-                  Connexion...
+                  Connecting...
                 </>
               ) : (
-                "Se connecter"
+                "Log In"
               )}
             </button>
           </form>
@@ -439,20 +440,20 @@ export default function AdminDashboard() {
             onMouseEnter={e => e.currentTarget.style.borderColor = "#52525b"}
             onMouseLeave={e => e.currentTarget.style.borderColor = "#27272a"}>
             {ICONS.Refresh()}
-            {loading ? "Chargement..." : "Actualiser"}
+            {loading ? "Loading..." : "Refresh"}
           </button>
           <button onClick={() => { setAuthed(false); setData(null); }}
             style={{ padding:"6px 12px", borderRadius:4, background:"transparent", border:"1px solid transparent", color:"#71717a", fontWeight:500, fontSize:12, cursor:"pointer" }}
             onMouseEnter={e => e.currentTarget.style.color = "#f4f4f5"}
             onMouseLeave={e => e.currentTarget.style.color = "#71717a"}>
-            Déconnexion
+            Log Out
           </button>
         </div>
       </header>
 
       {/* Navigation Sub-Header */}
       <div style={{ background:"#09090b", borderBottom:"1px solid #18181b", padding:"0 32px", display:"flex", gap:0 }}>
-        {[["overview","Vue d'ensemble"],["users","Comptes Utilisateurs"],["activity","Journaux d'activité"]].map(([k,l]) => (
+        {[["overview","Overview"],["users","User Accounts"],["activity","Activity Logs"]].map(([k,l]) => (
           <button key={k} onClick={() => setTab(k)}
             style={{ padding:"16px 20px", background:"none", border:"none", borderBottom: tab===k ? "1px solid #f4f4f5" : "1px solid transparent",
               color: tab===k ? "#f4f4f5" : "#71717a", fontWeight: tab===k ? 600 : 500, fontSize:13, cursor:"pointer", transition:"color 0.15s" }}
@@ -472,7 +473,7 @@ export default function AdminDashboard() {
 
         {loading && !data && (
           <div style={{ textAlign:"center", padding:"100px 0", color:"#71717a" }}>
-            <span style={{ fontSize:13 }}>Connexion à l'instance RunPod en cours...</span>
+            <span style={{ fontSize:13 }}>Connecting to server instance...</span>
           </div>
         )}
 
@@ -480,29 +481,29 @@ export default function AdminDashboard() {
           <>
             {/* KPI Cards Grid */}
             <div style={S.grid4}>
-              <KpiCard icon={ICONS.Users()} label="Total Utilisateurs" value={totalUsers}
-                sub={`+${new30d} inscrits ce mois`} sparkData={dailySigns} />
-              <KpiCard icon={ICONS.Database()} label="Membres Pro" value={activeSubs}
-                sub={`Taux de conversion : ${convRate}%`} />
-              <KpiCard icon={ICONS.Database()} label="Comptes Free" value={freeUsers}
-                sub={`${totalUsers ? Math.round((freeUsers/totalUsers)*100) : 0}% de la base`} />
-              <KpiCard icon={ICONS.Activity()} label="Actifs (7 jours)" value={active7d}
-                sub={`${totalUsers ? Math.round((active7d/totalUsers)*100) : 0}% d'engagement`} />
+              <KpiCard icon={ICONS.Users()} label="Total Users" value={totalUsers}
+                sub={`+${new30d} registered this month`} sparkData={dailySigns} />
+              <KpiCard icon={ICONS.Database()} label="Pro Members" value={activeSubs}
+                sub={`Conversion rate: ${convRate}%`} />
+              <KpiCard icon={ICONS.Database()} label="Free Accounts" value={freeUsers}
+                sub={`${totalUsers ? Math.round((freeUsers/totalUsers)*100) : 0}% of total users`} />
+              <KpiCard icon={ICONS.Activity()} label="Active (7 days)" value={active7d}
+                sub={`${totalUsers ? Math.round((active7d/totalUsers)*100) : 0}% engagement`} />
               <KpiCard icon={ICONS.Message()} label="Total Messages" value={totalMsgs}
                 sparkData={dailyMsgs} />
-              <KpiCard icon={ICONS.Activity()} label="Messages (7 jours)" value={messages7d}
-                sub={`Moyenne : ${active7d > 0 ? Math.round(messages7d/active7d) : 0} msg/user`} />
-              <KpiCard icon={ICONS.Globe()} label="Pays couverts" value={countries.length}
-                sub={countries[0] ? `Top : ${countryName(countries[0].country)}` : "Aucune donnée"} />
-              <KpiCard icon={ICONS.ChartUp()} label="Nouveaux comptes (30j)" value={new30d}
-                sub="Croissance brute" />
+              <KpiCard icon={ICONS.Activity()} label="Messages (7 days)" value={messages7d}
+                sub={`Average: ${active7d > 0 ? Math.round(messages7d/active7d) : 0} msg/user`} />
+              <KpiCard icon={ICONS.Globe()} label="Countries Covered" value={countries.length}
+                sub={countries[0] ? `Top: ${countryName(countries[0].country)}` : "No data"} />
+              <KpiCard icon={ICONS.ChartUp()} label="New Accounts (30d)" value={new30d}
+                sub="Raw growth" />
             </div>
 
             {/* Charts Row */}
             <div style={{ ...S.grid2, gridTemplateColumns:"1fr 1fr 1fr" }}>
               {/* Plan Distribution */}
               <div style={S.card}>
-                <div style={S.cardT}>Répartition des plans</div>
+                <div style={S.cardT}>Plan Distribution</div>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:32, minHeight: 140 }}>
                   <DonutChart segments={donutData} size={130} />
                   <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
@@ -519,7 +520,7 @@ export default function AdminDashboard() {
 
               {/* Modality Usage */}
               <div style={S.card}>
-                <div style={S.cardT}>Modalités d'interactions</div>
+                <div style={S.cardT}>Interaction Modalities</div>
                 {Object.keys(modalities).length > 0 ? (
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:32, minHeight: 140 }}>
                     <DonutChart segments={modalityDonut} size={130} />
@@ -534,13 +535,13 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height: 140, color:"#52525b", fontSize:12 }}>Aucun journal d'activité disponible</div>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height: 140, color:"#52525b", fontSize:12 }}>No activity logs available</div>
                 )}
               </div>
 
               {/* Geography */}
               <div style={S.card}>
-                <div style={S.cardT}>Top Pays (Utilisateurs)</div>
+                <div style={S.cardT}>Top Countries (Users)</div>
                 {countries.length > 0 ? (
                   <>
                     <BarChart data={countries} color="#52525b" height={110} />
@@ -555,7 +556,7 @@ export default function AdminDashboard() {
                     </div>
                   </>
                 ) : (
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height: 140, color:"#52525b", fontSize:12 }}>Aucun utilisateur localisé</div>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height: 140, color:"#52525b", fontSize:12 }}>No localized users</div>
                 )}
               </div>
             </div>
@@ -565,11 +566,11 @@ export default function AdminDashboard() {
         {data && tab === "users" && (
           <div style={S.card}>
             <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
-              <div style={S.cardT}>Profils Utilisateurs ({recentUsers.length})</div>
+              <div style={S.cardT}>User Profiles ({recentUsers.length})</div>
               <div style={{ position:"relative", display:"flex", alignItems:"center" }}>
                 <div style={{ position:"absolute", left:10, display:"flex", alignItems:"center" }}>{ICONS.Search()}</div>
                 <input value={search} onChange={e => setSearch(e.target.value)}
-                  placeholder="Rechercher un profil..."
+                  placeholder="Search profiles..."
                   style={{ padding:"8px 12px 8px 32px", borderRadius:6, background:"#09090b", border:"1px solid #27272a", color:"#f4f4f5", fontSize:12, outline:"none", width:280, transition:"border-color 0.15s" }}
                   onFocus={e => e.target.style.borderColor = "#52525b"}
                   onBlur={e => e.target.style.borderColor = "#27272a"} />
@@ -579,18 +580,18 @@ export default function AdminDashboard() {
               <table>
                 <thead>
                   <tr>
-                    {sortable("username","UTILISATEUR")}
-                    {sortable("email","ADRESSE EMAIL")}
-                    {sortable("country","PAYS")}
-                    {sortable("subscription_status","PLAN ACTIF")}
+                    {sortable("username","USER")}
+                    {sortable("email","EMAIL ADDRESS")}
+                    {sortable("country","COUNTRY")}
+                    {sortable("subscription_status","ACTIVE PLAN")}
                     {sortable("total_messages","MESSAGES")}
-                    {sortable("created_at","DATE D'INSCRIPTION")}
-                    {sortable("last_seen","DERNIÈRE ACTIVITÉ")}
+                    {sortable("created_at","SIGNUP DATE")}
+                    {sortable("last_seen","LAST ACTIVITY")}
                   </tr>
                 </thead>
                 <tbody>
                   {recentUsers.length === 0 && (
-                    <tr><td colSpan={7} style={{ padding:"32px", textAlign:"center", color:"#52525b", fontSize:12 }}>Aucun enregistrement ne correspond à votre recherche.</td></tr>
+                    <tr><td colSpan={7} style={{ padding:"32px", textAlign:"center", color:"#52525b", fontSize:12 }}>No records match your search.</td></tr>
                   )}
                   {recentUsers.map((u, i) => (
                     <tr key={i}>
@@ -609,7 +610,7 @@ export default function AdminDashboard() {
                             <img src={FLAG_URL(u.country)} alt={u.country} style={{ borderRadius:2, width: 16, height: 12, objectFit: "cover" }} onError={e=>e.target.style.display="none"} />
                             <span style={{ fontSize:12, color:"#a1a1aa" }}>{countryName(u.country)}</span>
                           </div>
-                        ) : <span style={{ fontSize:11, color:"#3f3f46" }}>Non localisé</span>}
+                        ) : <span style={{ fontSize:11, color:"#3f3f46" }}>Not localized</span>}
                       </td>
                       <td style={{ padding:"12px 16px" }}>
                         <span style={S.badge(u.subscription_status === "active" ? "#22c55e" : "#6b7280")}>
@@ -618,10 +619,10 @@ export default function AdminDashboard() {
                       </td>
                       <td style={{ padding:"12px 16px", fontSize:12, fontWeight:500, color:"#f4f4f5", fontFamily:"monospace" }}>{(u.total_messages || 0).toLocaleString()}</td>
                       <td style={{ padding:"12px 16px", fontSize:12, color:"#71717a" }}>
-                        {u.created_at ? new Date(u.created_at).toLocaleDateString("fr-FR") : "—"}
+                        {u.created_at ? new Date(u.created_at).toLocaleDateString("en-US") : "—"}
                       </td>
                       <td style={{ padding:"12px 16px", fontSize:12, color:"#71717a" }}>
-                        {u.last_seen ? new Date(u.last_seen).toLocaleDateString("fr-FR") : "—"}
+                        {u.last_seen ? new Date(u.last_seen).toLocaleDateString("en-US") : "—"}
                       </td>
                     </tr>
                   ))}
@@ -635,40 +636,40 @@ export default function AdminDashboard() {
           <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
             {/* User growth graph */}
             <div style={S.card}>
-              <div style={S.cardT}>Nouvelles inscriptions (30j)</div>
+              <div style={S.cardT}>New Signups (30d)</div>
               {dailySigns.length > 0 ? (
                 <>
                   <BarChart data={dailySigns.map(d => ({ date: d.date, count: d.count, users: d.count }))} color="#27272a" height={150} />
                   <div style={{ marginTop:16, display:"flex", justifyContent:"flex-end" }}>
                     <div style={{ textAlign:"right" }}>
                       <div style={{ fontSize:22, fontWeight:700, color:"#f4f4f5", fontFamily:"monospace" }}>{new30d}</div>
-                      <div style={{ fontSize:11, color:"#71717a" }}>nouveaux comptes sur les 30 derniers jours</div>
+                      <div style={{ fontSize:11, color:"#71717a" }}>new accounts in the last 30 days</div>
                     </div>
                   </div>
                 </>
               ) : (
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height: 150, color:"#52525b", fontSize:12 }}>
-                  Aucune inscription récente enregistrée.
+                  No recent signups recorded.
                 </div>
               )}
             </div>
 
             {/* Messages volume graph */}
             <div style={S.card}>
-              <div style={S.cardT}>Volume de conversations (30j)</div>
+              <div style={S.cardT}>Chat Volume (30d)</div>
               {dailyMsgs.length > 0 ? (
                 <>
                   <BarChart data={dailyMsgs.map(d => ({ date: d.date, count: d.count, users: d.count }))} color="#52525b" height={150} />
                   <div style={{ marginTop:16, display:"flex", justifyContent:"flex-end" }}>
                     <div style={{ textAlign:"right" }}>
                       <div style={{ fontSize:22, fontWeight:700, color:"#f4f4f5", fontFamily:"monospace" }}>{messages7d}</div>
-                      <div style={{ fontSize:11, color:"#71717a" }}>messages échangés les 7 derniers jours</div>
+                      <div style={{ fontSize:11, color:"#71717a" }}>messages exchanged in the last 7 days</div>
                     </div>
                   </div>
                 </>
               ) : (
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height: 150, color:"#52525b", fontSize:12 }}>
-                  Aucune activité de message enregistrée.
+                  No message activity recorded.
                 </div>
               )}
             </div>
@@ -677,7 +678,7 @@ export default function AdminDashboard() {
             <div style={{ ...S.grid2, gridTemplateColumns:"1fr 1fr" }}>
               {/* Modalites detailed list */}
               <div style={S.card}>
-                <div style={S.cardT}>Répartition par type d'échange</div>
+                <div style={S.cardT}>Distribution by interaction type</div>
                 {Object.keys(modalities).length > 0 ? (
                   <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
                     {Object.entries(modalities).sort((a,b) => b[1]-a[1]).map(([k, v]) => {
@@ -697,13 +698,13 @@ export default function AdminDashboard() {
                     })}
                   </div>
                 ) : (
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height: 100, color:"#52525b", fontSize:12 }}>Aucun log d'activité</div>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height: 100, color:"#52525b", fontSize:12 }}>No activity logs</div>
                 )}
               </div>
 
               {/* Geographic list details */}
               <div style={S.card}>
-                <div style={S.cardT}>Répartition géographique des comptes</div>
+                <div style={S.cardT}>Geographical Account Distribution</div>
                 {countries.length > 0 ? (
                   <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
                     {countries.map((c, i) => {
@@ -725,7 +726,7 @@ export default function AdminDashboard() {
                     })}
                   </div>
                 ) : (
-                  <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height: 100, color:"#52525b", fontSize:12 }}>Aucun utilisateur localisé</div>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height: 100, color:"#52525b", fontSize:12 }}>No localized users</div>
                 )}
               </div>
             </div>
@@ -734,7 +735,7 @@ export default function AdminDashboard() {
 
         {/* Footer */}
         <div style={{ marginTop:48, textAlign:"left", color:"#52525b", fontSize:11, borderTop:"1px solid #18181b", paddingTop:20, display:"flex", justifyContent:"space-between" }}>
-          <span>Hemo System Analytics — Generated at {d.generated_at ? new Date(d.generated_at).toLocaleString("fr-FR") : "N/A"}</span>
+          <span>Hemo System Analytics — Generated at {d.generated_at ? new Date(d.generated_at).toLocaleString("en-US") : "N/A"}</span>
           <span>Automatic refresh: 60s</span>
         </div>
       </main>

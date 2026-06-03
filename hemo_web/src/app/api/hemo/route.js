@@ -32,7 +32,7 @@ async function pollRunPodStatus(jobId, maxWaitMs = 90000) {
     if (data.status === "COMPLETED") return data;
     if (data.status === "FAILED")    return data;
   }
-  throw new Error("RunPod job timed out after 90 seconds");
+  throw new Error("The request timed out. Please try again shortly.");
 }
 
 export const maxDuration = 120; // Vercel: allow up to 120s
@@ -40,7 +40,7 @@ export const maxDuration = 120; // Vercel: allow up to 120s
 export async function POST(request) {
   if (!RUNPOD_API_KEY) {
     return Response.json(
-      { error: "RUNPOD_API_KEY is not configured on the server." },
+      { error: "Server configuration error. Please try again shortly." },
       { status: 500 }
     );
   }
@@ -104,9 +104,9 @@ export async function POST(request) {
     runpodData = await syncRes.json();
 
     if (!syncRes.ok) {
-      console.error("[hemo proxy] RunPod HTTP error:", syncRes.status, runpodData);
+      console.error("[hemo proxy] Gateway HTTP error:", syncRes.status, runpodData);
       return Response.json(
-        { error: `RunPod gateway error (${syncRes.status})`, detail: runpodData },
+        { error: "The service is temporarily unavailable. Please try again shortly." },
         { status: syncRes.status }
       );
     }
@@ -118,7 +118,7 @@ export async function POST(request) {
         runpodData = await pollRunPodStatus(runpodData.id, 90000);
       } catch (pollErr) {
         return Response.json(
-          { error: pollErr.message, hint: "Le worker RunPod est en cours de démarrage (cold start). Réessayez dans 10 secondes." },
+          { error: "The system is initializing. Please try again in 10 seconds." },
           { status: 503 }
         );
       }
@@ -130,24 +130,24 @@ export async function POST(request) {
     }
 
     if (runpodData.status === "FAILED") {
-      console.error("[hemo proxy] RunPod job failed:", runpodData.error);
+      console.error("[hemo proxy] Remote execution failed:", runpodData.error);
       return Response.json(
-        { error: "RunPod job failed", detail: runpodData.error },
+        { error: "The request failed. Please try again shortly." },
         { status: 500 }
       );
     }
 
     // Statut inattendu — retourner quand même pour ne pas bloquer le frontend
-    console.warn("[hemo proxy] Unexpected RunPod status:", runpodData.status);
+    console.warn("[hemo proxy] Unexpected status:", runpodData.status);
     return Response.json(
-      { error: `Statut inattendu : ${runpodData.status}. Le worker est peut-être en cours de démarrage.` },
+      { error: "The system is initializing. Please try again shortly." },
       { status: 503 }
     );
 
   } catch (err) {
     console.error("[hemo proxy] Internal error:", err);
     return Response.json(
-      { error: "Internal proxy error", detail: err.message },
+      { error: "An unexpected error occurred. Please try again shortly." },
       { status: 500 }
     );
   }

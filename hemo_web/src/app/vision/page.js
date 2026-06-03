@@ -71,7 +71,7 @@ export default function VisionPage() {
           >
             <Camera size={16} color="white" />
           </div>
-          <h1>Analyse d'images</h1>
+          <h1>Image Analysis</h1>
           {selectedImage && (
             <button
               onClick={reset}
@@ -112,7 +112,7 @@ export default function VisionPage() {
           {/* Drop zone / preview */}
           {selectedImage ? (
             <div style={{ position: "relative" }}>
-              <img src={selectedImage} alt="Aperçu" className="preview-img" />
+              <img src={selectedImage} alt="Preview" className="preview-img" />
               {isProcessing && (
                 <div
                   style={{
@@ -128,7 +128,7 @@ export default function VisionPage() {
                   }}
                 >
                   <div className="spinner spinner-accent" style={{ width: 40, height: 40, borderWidth: 3 }} />
-                  <span style={{ color: "white", fontWeight: 600 }}>Analyse en cours...</span>
+                  <span style={{ color: "white", fontWeight: 600 }}>Analyzing...</span>
                 </div>
               )}
             </div>
@@ -182,7 +182,7 @@ export default function VisionPage() {
             <div className="result-card">
               <div className="result-header">
                 <span>🩸</span>
-                <span>Analyse Hemo</span>
+                <span>Hemo Analysis</span>
               </div>
               <p>{analysisResult}</p>
             </div>

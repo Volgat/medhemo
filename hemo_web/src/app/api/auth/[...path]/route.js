@@ -30,7 +30,7 @@ async function callRunPod(jobInput) {
   });
   const data = await res.json();
   if (data.status === "COMPLETED" && data.output !== undefined) return data.output;
-  if (data.status === "FAILED") throw new Error(data.error || "RunPod job failed");
+  if (data.status === "FAILED") throw new Error("The service is temporarily unavailable. Please try again shortly.");
   return data;
 }
 
@@ -54,7 +54,8 @@ async function supabaseQuery(table, method = "GET", body = null, query = "") {
   });
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Supabase error (${res.status}): ${err}`);
+    console.error(`[auth proxy] DB error (${res.status}): ${err}`);
+    throw new Error("The database is currently inaccessible. Please try again shortly.");
   }
   const text = await res.text();
   return text ? JSON.parse(text) : null;
@@ -69,7 +70,10 @@ export async function POST(request, { params }) {
 
     // ── SIGNUP ──────────────────────────────────────────────────────────────
     if (action === "signup") {
-      const { username, email, password } = body;
+      const username = body.username?.trim();
+      const email    = body.email?.trim();
+      const password = body.password;
+
       if (!username || !email || !password) {
         return Response.json({ detail: "Username, email and password are required." }, { status: 400 });
       }
@@ -77,10 +81,20 @@ export async function POST(request, { params }) {
       // Try direct Supabase first
       if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
         try {
-          // Check if user already exists
-          const existing = await supabaseQuery("users", "GET", null, `?username=eq.${encodeURIComponent(username)}&select=id`);
+          // Check if user already exists (username or email)
+          const existing = await supabaseQuery(
+            "users", 
+            "GET", 
+            null, 
+            `?or=(username.ilike.${encodeURIComponent(username)},email.ilike.${encodeURIComponent(email)})&select=username,email`
+          );
           if (existing && existing.length > 0) {
-            return Response.json({ detail: "Username already exists" }, { status: 400 });
+            const match = existing[0];
+            if (match.username.toLowerCase() === username.toLowerCase()) {
+              return Response.json({ detail: "Username already exists" }, { status: 400 });
+            } else {
+              return Response.json({ detail: "Email already exists" }, { status: 400 });
+            }
           }
 
           // Create user
@@ -101,16 +115,16 @@ export async function POST(request, { params }) {
             subscription_status: u.subscription_status || "inactive",
           });
         } catch (supaErr) {
-          console.error("[auth/signup] Supabase error, falling back to RunPod:", supaErr.message);
-          // Fall through to RunPod fallback
+          console.error("[auth/signup] Database error, falling back to backup service:", supaErr.message);
+          // Fall through to fallback
         }
       }
 
-      // Fallback to RunPod
+      // Fallback
       if (!RUNPOD_API_KEY) {
-        return Response.json({ detail: "Server misconfiguration — no DB or RunPod configured." }, { status: 500 });
+        return Response.json({ detail: "Server misconfiguration. Please try again shortly." }, { status: 500 });
       }
-      const output = await callRunPod({ action: "auth_signup", ...body });
+      const output = await callRunPod({ action: "auth_signup", ...body, username, email });
       if (output?.error || output?.detail) {
         return Response.json(output, { status: 400 });
       }
@@ -119,7 +133,9 @@ export async function POST(request, { params }) {
 
     // ── LOGIN ───────────────────────────────────────────────────────────────
     if (action === "login") {
-      const { username, password } = body;
+      const username = body.username?.trim();
+      const password = body.password;
+
       if (!username || !password) {
         return Response.json({ detail: "Username and password are required." }, { status: 400 });
       }
@@ -131,7 +147,7 @@ export async function POST(request, { params }) {
             "users",
             "GET",
             null,
-            `?username=eq.${encodeURIComponent(username)}&select=id,username,email,hashed_password,subscription_status`
+            `?or=(username.ilike.${encodeURIComponent(username)},email.ilike.${encodeURIComponent(username)})&select=id,username,email,hashed_password,subscription_status`
           );
 
           if (!users || users.length === 0) {
@@ -144,8 +160,8 @@ export async function POST(request, { params }) {
             return Response.json({ detail: "Invalid credentials" }, { status: 401 });
           }
 
-          // Update last_seen asynchronously (don't wait)
-          supabaseQuery("users", "PATCH", { last_seen: new Date().toISOString() }, `?username=eq.${encodeURIComponent(username)}`).catch(() => {});
+          // Update last_seen asynchronously using ID (don't wait)
+          supabaseQuery("users", "PATCH", { last_seen: new Date().toISOString() }, `?id=eq.${user.id}`).catch(() => {});
 
           return Response.json({
             message:             "Logged in",
@@ -154,16 +170,16 @@ export async function POST(request, { params }) {
             subscription_status: user.subscription_status || "inactive",
           });
         } catch (supaErr) {
-          console.error("[auth/login] Supabase error, falling back to RunPod:", supaErr.message);
-          // Fall through to RunPod fallback
+          console.error("[auth/login] Database error, falling back to backup service:", supaErr.message);
+          // Fall through to fallback
         }
       }
 
-      // Fallback to RunPod
+      // Fallback
       if (!RUNPOD_API_KEY) {
-        return Response.json({ detail: "Server misconfiguration — no DB or RunPod configured." }, { status: 500 });
+        return Response.json({ detail: "Server misconfiguration. Please try again shortly." }, { status: 500 });
       }
-      const output = await callRunPod({ action: "auth_login", ...body });
+      const output = await callRunPod({ action: "auth_login", ...body, username });
       if (output?.error || output?.detail) {
         return Response.json(output, { status: 401 });
       }
@@ -172,7 +188,7 @@ export async function POST(request, { params }) {
 
     // ── RESET REQUEST ────────────────────────────────────────────────────────
     if (action === "reset-request") {
-      const { email } = body;
+      const email = body.email?.trim();
       if (!email) {
         return Response.json({ detail: "Email is required." }, { status: 400 });
       }
@@ -184,7 +200,7 @@ export async function POST(request, { params }) {
             "users",
             "GET",
             null,
-            `?email=eq.${encodeURIComponent(email)}&select=id,username`
+            `?email=ilike.${encodeURIComponent(email)}&select=id,username`
           );
 
           if (!users || users.length === 0) {
@@ -208,16 +224,16 @@ export async function POST(request, { params }) {
             resetCode: resetCode,
           });
         } catch (supaErr) {
-          console.error("[auth/reset-request] Supabase error, falling back to RunPod:", supaErr.message);
-          // Fall through to RunPod fallback
+          console.error("[auth/reset-request] Database error, falling back to backup service:", supaErr.message);
+          // Fall through to fallback
         }
       }
 
-      // Fallback to RunPod
+      // Fallback
       if (!RUNPOD_API_KEY) {
-        return Response.json({ detail: "Server misconfiguration — no DB or RunPod configured." }, { status: 500 });
+        return Response.json({ detail: "Server misconfiguration. Please try again shortly." }, { status: 500 });
       }
-      const output = await callRunPod({ action: "auth_reset_request", ...body });
+      const output = await callRunPod({ action: "auth_reset_request", ...body, email });
       if (output?.error || output?.detail) {
         return Response.json(output, { status: 400 });
       }
@@ -226,7 +242,10 @@ export async function POST(request, { params }) {
 
     // ── RESET PASSWORD ───────────────────────────────────────────────────────
     if (action === "reset-password") {
-      const { username, resetCode, newPassword } = body;
+      const username = body.username?.trim();
+      const resetCode = body.resetCode?.trim();
+      const newPassword = body.newPassword;
+
       if (!username || !resetCode || !newPassword) {
         return Response.json({ detail: "Username, reset code and new password are required." }, { status: 400 });
       }
@@ -238,7 +257,7 @@ export async function POST(request, { params }) {
             "users",
             "GET",
             null,
-            `?username=eq.${encodeURIComponent(username)}&select=id,reset_code`
+            `?username=ilike.${encodeURIComponent(username)}&select=id,reset_code`
           );
 
           if (!users || users.length === 0) {
@@ -263,16 +282,16 @@ export async function POST(request, { params }) {
 
           return Response.json({ message: "Success" });
         } catch (supaErr) {
-          console.error("[auth/reset-password] Supabase error, falling back to RunPod:", supaErr.message);
-          // Fall through to RunPod fallback
+          console.error("[auth/reset-password] Database error, falling back to backup service:", supaErr.message);
+          // Fall through to fallback
         }
       }
 
-      // Fallback to RunPod
+      // Fallback
       if (!RUNPOD_API_KEY) {
-        return Response.json({ detail: "Server misconfiguration — no DB or RunPod configured." }, { status: 500 });
+        return Response.json({ detail: "Server misconfiguration. Please try again shortly." }, { status: 500 });
       }
-      const output = await callRunPod({ action: "auth_reset_password", ...body });
+      const output = await callRunPod({ action: "auth_reset_password", ...body, username, resetCode });
       if (output?.error || output?.detail) {
         return Response.json(output, { status: 400 });
       }
@@ -283,7 +302,8 @@ export async function POST(request, { params }) {
 
   } catch (err) {
     console.error("[auth proxy] error:", err);
-    return Response.json({ detail: err.message }, { status: 500 });
+    const msg = err.message || "An unexpected error occurred. Please try again shortly.";
+    return Response.json({ detail: msg }, { status: 500 });
   }
 }
 
@@ -291,7 +311,7 @@ export async function POST(request, { params }) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const username = searchParams.get("username") || "";
+    const username = searchParams.get("username")?.trim() || "";
 
     if (!username) {
       return Response.json({ detail: "Username required" }, { status: 400 });
@@ -304,7 +324,7 @@ export async function GET(request) {
           "users",
           "GET",
           null,
-          `?username=eq.${encodeURIComponent(username)}&select=username,email,subscription_status`
+          `?or=(username.ilike.${encodeURIComponent(username)},email.ilike.${encodeURIComponent(username)})&select=username,email,subscription_status`
         );
 
         if (!users || users.length === 0) {
